@@ -2,94 +2,102 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>福島県 福祉施設 災害時情報共有システム</title>
+<title>福島県医師会 災害時医療情報伝達アプリ</title>
 <style>
-:root{--nav:#14395d;--blue:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b;--red:#dc2626;--amber:#d97706;--green:#059669;--line:#dbe3ee}
+:root{--nav:#103a5d;--blue:#2563eb;--bg:#f4f7fb;--text:#172033;--muted:#64748b;--red:#dc2626;--amber:#d97706;--green:#059669;--line:#dbe3ee}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
-header{background:linear-gradient(135deg,#10314f,#1d5b8f);color:#fff;padding:16px;position:sticky;top:0;z-index:10}
-header h1{font-size:20px;margin:0} header p{font-size:12px;margin:5px 0 0;opacity:.9}
-main{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;gap:14px}.home{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+header{background:linear-gradient(135deg,#10314f,#1d5b8f);color:#fff;padding:16px;position:sticky;top:0;z-index:10}header h1{font-size:20px;margin:0}header p{font-size:12px;margin:5px 0 0;opacity:.92}
+main{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;gap:14px}.home{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px #1e293b0a}.action{cursor:pointer}.action:hover{transform:translateY(-2px)}
 .icon{font-size:30px}.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700}.r{background:#fee2e2;color:#991b1b}.y{background:#fef3c7;color:#92400e}.b{background:#dbeafe;color:#1e40af}
 button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}button.secondary{background:#e2e8f0;color:#1e293b}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:720px){.row{grid-template-columns:1fr}}
 label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}textarea{min-height:86px}
-.section{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left}.tablewrap{overflow:auto}
-.status{padding:9px;border-radius:8px;margin:10px 0}.ok{background:#d1fae5}.warn{background:#fef3c7}.danger{background:#fee2e2}
-</style>
-</head>
-<body>
-<header><h1>福島県 福祉施設 災害時情報共有システム</h1><p>高齢者・障害者・児童福祉施設等の被災状況／支援ニーズ共有</p></header>
+.section{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}.status{padding:9px;border-radius:8px;margin:10px 0}.ok{background:#d1fae5}
+.note{background:#eef6ff;border-left:4px solid #2563eb;padding:12px;border-radius:8px;font-size:13px}
+</style></head><body>
+<header><h1>福島県医師会 災害時医療情報伝達アプリ</h1><p>医師会会員医療機関向け｜EMISに準じた安否・被災状況・診療機能の情報共有</p></header>
 <main>
 <section id="home">
-<div class="card"><b>災害時は、まず第1報を入力してください。</b><div class="small">その後、状況変化に応じて詳細情報・支援要請を更新します。</div></div>
+<div class="card"><b>発災時は、まず「① 災害時の安否確認」を入力してください。</b><div class="small">病院・有床診療所・無床診療所・歯科診療所等の会員医療機関を想定しています。</div></div>
 <div class="grid home" style="margin-top:14px">
-<div class="card action" onclick="showForm('first')"><div class="icon">🆘</div><span class="badge r">第1報</span><h2>① 安否・被災状況</h2><p>人的被害、建物、ライフライン、避難状況を迅速報告</p></div>
-<div class="card action" onclick="showForm('detail')"><div class="icon">🏠</div><span class="badge y">詳細</span><h2>② 施設詳細情報</h2><p>利用者・職員、電気・水・食料、医療介護継続状況を入力</p></div>
-<div class="card action" onclick="showForm('support')"><div class="icon">🚚</div><span class="badge b">支援要請</span><h2>③ 支援ニーズ</h2><p>物資、人員、搬送、避難先、医療支援などを要請</p></div>
+<div class="card action" onclick="showForm('safety')"><div class="icon">✅</div><span class="badge b">第1報</span><h2>① 災害時の安否確認</h2><p>職員・施設の安否、診療継続可否、支援要否を迅速報告</p></div>
+<div class="card action" onclick="showForm('emergency')"><div class="icon">🚨</div><span class="badge r">EMIS</span><h2>② EMIS 緊急時入力</h2><p>建物、ライフライン、診療・救急受入、支援要請を入力</p></div>
+<div class="card action" onclick="showForm('detail')"><div class="icon">🏥</div><span class="badge y">詳細</span><h2>③ 詳細入力</h2><p>被災状況、ライフライン・サプライ、診療機能、患者搬送を詳細入力</p></div>
 </div>
+<div class="note" style="margin-top:14px">本アプリは福島県医師会内の情報共有用です。EMIS対象医療機関は、本アプリへの回答とは別に正式なEMIS入力も行ってください。</div>
 </section>
 
 <section id="formPage" class="hidden">
-<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="formTitle"></h2><button class="secondary" onclick="goHome()">← 戻る</button></div>
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><h2 id="formTitle"></h2><button class="secondary" onclick="goHome()">← 戻る</button></div>
 <form id="reportForm" class="card">
 <input type="hidden" id="reportType">
-<div class="row">
-<div><label>施設名 *</label><input id="facility" required></div>
-<div><label>施設種別 *</label><select id="facilityType" required>
-<option>特別養護老人ホーム</option><option>介護老人保健施設</option><option>養護老人ホーム</option><option>有料老人ホーム</option><option>認知症グループホーム</option><option>障害者支援施設</option><option>児童福祉施設</option><option>その他</option>
-</select></div></div>
-<div class="row"><div><label>市町村 *</label><input id="municipality" required></div><div><label>報告者 *</label><input id="reporter" required></div></div>
-<div class="row"><div><label>電話番号 *</label><input id="phone" required></div><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div></div>
+<div class="row"><div><label>医療機関名 *</label><input id="facility" required></div><div><label>医療機関区分 *</label><select id="facilityType" required><option>病院</option><option>有床診療所</option><option>無床診療所</option><option>歯科診療所</option><option>その他</option></select></div></div>
+<div class="row"><div><label>市町村 *</label><input id="municipality" required></div><div><label>回答者氏名・役職 *</label><input id="reporter" required></div></div>
+<div class="row"><div><label>連絡可能な電話番号 *</label><input id="phone" required></div><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div></div>
+<div class="row"><div><label>EMIS入力状況</label><select id="emisStatus"><option>未入力</option><option>緊急時入力済み</option><option>詳細入力済み</option><option>EMIS対象外・不明</option></select></div><div><label>震度</label><select id="seismic"><option value="">未確認</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5弱</option><option>5強</option><option>6弱</option><option>6強</option><option>7</option></select></div></div>
 
-<div id="firstFields" class="section">
-<h3>第1報</h3>
-<div class="row"><div><label>施設被害</label><select id="damage"><option>被害なし</option><option>軽微な被害</option><option>一部使用不可</option><option>施設継続困難</option><option>確認中</option></select></div>
-<div><label>人的被害</label><select id="casualty"><option>なし</option><option>負傷者あり</option><option>重症者あり</option><option>死亡者あり</option><option>確認中</option></select></div></div>
-<div class="row"><div><label>施設内避難継続</label><select id="stay"><option>可能</option><option>一部困難</option><option>困難・避難必要</option><option>確認中</option></select></div>
-<div><label>外部支援</label><select id="needSupport"><option>現時点で不要</option><option>必要</option><option>緊急に必要</option><option>確認中</option></select></div></div>
+<div id="safetyFields" class="section">
+<h3>① 災害時の安否確認</h3>
+<div class="row"><div><label>職員の安否</label><select id="staffSafety"><option>問題なし</option><option>負傷者あり</option><option>重傷者あり</option><option>確認中</option></select></div><div><label>医療機関の被害</label><select id="facilityDamage"><option>被害なし</option><option>被害あり</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>診療状況</label><select id="careStatus"><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option><option>未確認</option></select></div><div><label>支援要請</label><select id="supportNeeded"><option>なし</option><option>あり</option><option>緊急</option><option>確認中</option></select></div></div>
+<label>第1報・備考</label><textarea id="safetyNote" placeholder="例：外来診療可能。CT室浸水のため使用不能。"></textarea>
+</div>
+
+<div id="emergencyFields" class="section">
+<h3>② EMIS 緊急時入力に準じた項目</h3>
+<div class="row"><div><label>建物・施設被害</label><select id="building"><option>被害なし</option><option>一部被害</option><option>重大な被害</option><option>使用不能</option><option>確認中</option></select></div><div><label>建物の危険状況</label><select id="buildingRisk"><option>危険なし</option><option>一部立入制限</option><option>危険あり</option><option>評価中</option></select></div></div>
+<div class="row"><div><label>電気</label><select id="power"><option>使用可</option><option>非常電源のみ</option><option>停電</option><option>確認中</option></select></div><div><label>水道</label><select id="water"><option>使用可</option><option>制限あり</option><option>断水</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>医療ガス</label><select id="gas"><option>使用可</option><option>残量不安</option><option>使用不能</option><option>対象外・不明</option></select></div><div><label>通信</label><select id="comms"><option>通常</option><option>一部不通</option><option>携帯のみ</option><option>不通</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>現在の診療可否</label><select id="careEmergency"><option>診療可能</option><option>一部制限</option><option>診療不能</option><option>確認中</option></select></div><div><label>救急患者受入</label><select id="emergencyAccept"><option>可能</option><option>一部可能</option><option>不可</option><option>対象外</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>入院患者への影響</label><select id="inpatientImpact"><option>なし</option><option>あり</option><option>対象外</option><option>確認中</option></select></div><div><label>転院が必要な患者</label><select id="transferNeed"><option>なし</option><option>あり</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>人員不足</label><select id="staffShort"><option>なし</option><option>あり</option><option>深刻</option><option>確認中</option></select></div><div><label>医薬品・医療資機材不足</label><select id="supplyShort"><option>なし</option><option>あり</option><option>深刻</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>支援要否</label><select id="emergencySupport"><option>不要</option><option>要</option><option>緊急に要</option><option>確認中</option></select></div><div><label>患者搬送支援</label><select id="transportSupport"><option>不要</option><option>必要</option><option>緊急に必要</option><option>確認中</option></select></div></div>
+<label>必要な支援内容</label><textarea id="emergencyNote" placeholder="例：給水、発電機燃料、患者搬送、医師・看護師応援"></textarea>
 </div>
 
 <div id="detailFields" class="section">
-<h3>施設詳細</h3>
-<div class="row"><div><label>利用者数</label><input id="residents" type="number" min="0"></div><div><label>勤務可能職員数</label><input id="staff" type="number" min="0"></div></div>
-<div class="row"><div><label>電気</label><select id="power"><option>使用可</option><option>停電・非常電源あり</option><option>停電・非常電源なし</option></select></div><div><label>水道</label><select id="water"><option>使用可</option><option>制限あり</option><option>断水</option></select></div></div>
-<div class="row"><div><label>食料</label><select id="food"><option>3日以上</option><option>1〜2日</option><option>24時間未満</option><option>不足</option></select></div><div><label>医薬品・衛生材料</label><select id="meds"><option>問題なし</option><option>一部不足</option><option>不足</option></select></div></div>
-<div class="row"><div><label>医療的ケア継続</label><select id="medicalCare"><option>可能</option><option>一部困難</option><option>困難</option><option>対象者なし</option></select></div><div><label>通信</label><select id="comms"><option>通常</option><option>携帯のみ</option><option>固定電話のみ</option><option>不通</option></select></div></div>
+<h3>③ 被災状況の詳細入力に準じた項目</h3>
+<div class="row"><div><label>倒壊・損壊</label><select id="detailDamage"><option>なし</option><option>軽微</option><option>一部使用不能</option><option>重大</option></select></div><div><label>浸水</label><select id="flood"><option>なし</option><option>あり</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>火災</label><select id="fire"><option>なし</option><option>あり</option><option>鎮火済み</option><option>確認中</option></select></div><div><label>商用電源</label><select id="gridPower"><option>使用可</option><option>停電</option><option>復旧見込み不明</option></select></div></div>
+<div class="row"><div><label>非常用発電機</label><select id="generator"><option>稼働可</option><option>制限あり</option><option>稼働不可</option><option>なし</option></select></div><div><label>燃料残り時間（時間）</label><input id="fuelHours" type="number" min="0"></div></div>
+<div class="row"><div><label>上水</label><select id="detailWater"><option>使用可</option><option>制限あり</option><option>断水</option></select></div><div><label>受水槽</label><select id="tank"><option>問題なし</option><option>残量少</option><option>使用不可</option><option>なし・不明</option></select></div></div>
+<div class="row"><div><label>固定電話</label><select id="fixedPhone"><option>使用可</option><option>一部不通</option><option>不通</option></select></div><div><label>インターネット</label><select id="internet"><option>使用可</option><option>不安定</option><option>不通</option></select></div></div>
+<h4>診療機能・オペレーション</h4>
+<div class="row"><div><label>外来</label><select id="outpatient"><option>通常</option><option>制限あり</option><option>停止</option></select></div><div><label>救急</label><select id="er"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div></div>
+<div class="row"><div><label>入院</label><select id="ward"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div><div><label>手術</label><select id="surgery"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div></div>
+<div class="row"><div><label>ICU/HCU</label><select id="icu"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div><div><label>人工透析</label><select id="dialysis"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div></div>
+<div class="row"><div><label>分娩</label><select id="delivery"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div><div><label>在宅医療</label><select id="homecare"><option>通常</option><option>制限あり</option><option>停止</option><option>対象外</option></select></div></div>
+<div class="row"><div><label>処方・薬剤提供</label><select id="pharmacy"><option>通常</option><option>制限あり</option><option>停止</option></select></div><div><label>酸素・医療ガス供給</label><select id="oxygen"><option>問題なし</option><option>残量不安</option><option>不足</option><option>対象外</option></select></div></div>
+<h4>患者・人的資源</h4>
+<div class="row"><div><label>現在の入院患者数</label><input id="inpatients" type="number" min="0"></div><div><label>転院必要患者数</label><input id="transferCount" type="number" min="0"></div></div>
+<div class="row"><div><label>新規患者受入</label><select id="newAccept"><option>可能</option><option>制限あり</option><option>不可</option></select></div><div><label>重症患者受入</label><select id="criticalAccept"><option>可能</option><option>制限あり</option><option>不可</option><option>対象外</option></select></div></div>
+<div class="row"><div><label>医師不足</label><select id="doctorShort"><option>なし</option><option>あり</option><option>深刻</option></select></div><div><label>看護師不足</label><select id="nurseShort"><option>なし</option><option>あり</option><option>深刻</option></select></div></div>
+<label>不足している医薬品・物資・資機材</label><textarea id="supplies" placeholder="例：酸素、輸液、抗菌薬、透析物品、PPE、飲料水、燃料"></textarea>
+<label>必要な支援内容・その他詳細</label><textarea id="detailNote" placeholder="搬送、人員、物資、ライフライン等"></textarea>
 </div>
 
-<div id="supportFields" class="section">
-<h3>支援ニーズ</h3>
-<label>必要な支援（複数可・自由記載）</label><textarea id="supportNeed" placeholder="例：飲料水、介護職員2名、発電機、酸素、車椅子利用者3名の搬送、受入先調整"></textarea>
-<div class="row"><div><label>避難・搬送が必要な人数</label><input id="evacCount" type="number" min="0"></div><div><label>緊急度</label><select id="urgency"><option>低</option><option>中</option><option>高</option><option>最優先</option></select></div></div>
-<label>その他・連絡事項</label><textarea id="notes"></textarea>
-</div>
 <button type="submit">この内容で報告する</button>
-<div id="saved" class="status ok hidden">保存しました。この端末の管理一覧に反映されました。</div>
+<div id="saved" class="status ok hidden">回答を保存しました。</div>
 </form>
 </section>
-
-<div class="small" style="text-align:center;padding:25px">※ 現在の試作版はブラウザ内保存です。県全体でリアルタイム共有するにはサーバー側データベースと認証を接続します。</div>
+<div class="small" style="text-align:center;padding:25px">※ 現在はブラウザ内保存の試作版です。県内医療機関からの回答を一元集約するには、サーバー側データベースへの接続が必要です。</div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
+const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
 function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
- $('home').classList.add('hidden');$('formPage').classList.remove('hidden');
- $('reportType').value=type;$('reportedAt').value=nowLocal();
- const titles={first:'① 安否・被災状況（第1報）',detail:'② 施設詳細情報',support:'③ 支援ニーズ'};$('formTitle').textContent=titles[type];
- $('firstFields').classList.toggle('hidden',type!=='first');$('detailFields').classList.toggle('hidden',type!=='detail');$('supportFields').classList.toggle('hidden',type!=='support');
+ $('home').classList.add('hidden');$('formPage').classList.remove('hidden');$('reportType').value=type;$('reportedAt').value=nowLocal();
+ const titles={safety:'① 災害時の安否確認',emergency:'② EMIS 緊急時入力',detail:'③ 詳細入力'};$('formTitle').textContent=titles[type];
+ $('safetyFields').classList.toggle('hidden',type!=='safety');$('emergencyFields').classList.toggle('hidden',type!=='emergency');$('detailFields').classList.toggle('hidden',type!=='detail');
 }
-function reports(){return JSON.parse(localStorage.getItem('welfareDisasterReports')||'[]')}
+function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
 $('reportForm').addEventListener('submit',e=>{
  e.preventDefault();
- const r={id:Date.now(),type:$('reportType').value,facility:$('facility').value,facilityType:$('facilityType').value,municipality:$('municipality').value,reporter:$('reporter').value,phone:$('phone').value,reportedAt:$('reportedAt').value,
- damage:$('damage').value,casualty:$('casualty').value,stay:$('stay').value,needSupport:$('needSupport').value,residents:$('residents').value,staff:$('staff').value,power:$('power').value,water:$('water').value,food:$('food').value,meds:$('meds').value,medicalCare:$('medicalCare').value,comms:$('comms').value,supportNeed:$('supportNeed').value,evacCount:$('evacCount').value,urgency:$('urgency').value,notes:$('notes').value};
- const a=reports();a.unshift(r);localStorage.setItem('welfareDisasterReports',JSON.stringify(a));$('saved').classList.remove('hidden');
- setTimeout(()=>$('saved').classList.add('hidden'),3000);
+ const r={id:Date.now(),type:$('reportType').value};fieldIds.forEach(id=>r[id]=$(id).value);r.updatedAt=new Date().toISOString();
+ const a=reports();a.unshift(r);localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
+ $('saved').classList.remove('hidden');setTimeout(()=>$('saved').classList.add('hidden'),3000);
 });
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-</script>
-</body></html>
+</script></body></html>
