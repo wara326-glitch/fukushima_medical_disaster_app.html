@@ -11,7 +11,7 @@ button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:poin
 input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:220px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:4200px;font-size:13px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}
 .bad{color:var(--red);font-weight:700}.warn{color:var(--amber);font-weight:700}.status{margin-top:10px;font-size:13px}.login{max-width:480px;margin:45px auto}
-.editbtn{padding:6px 10px;font-size:12px;white-space:nowrap}.deletebtn{padding:6px 10px;font-size:12px;white-space:nowrap;background:var(--red);margin-left:5px}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-start;justify-content:center;padding:24px;z-index:1000;overflow:auto}.modal.hidden{display:none}.modalbox{background:#fff;width:min(1100px,100%);border-radius:16px;padding:18px;box-shadow:0 20px 60px #0004}.editgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}.editfield label{display:block;font-size:12px;font-weight:700;margin-bottom:4px}.editfield input,.editfield textarea,.editfield select{width:100%}.editfield textarea{min-height:72px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}@media(max-width:720px){.editgrid{grid-template-columns:1fr}}
+.editbtn{padding:6px 10px;font-size:12px;white-space:nowrap}.deletebtn{padding:6px 10px;font-size:12px;white-space:nowrap;background:var(--red);margin-left:5px}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-start;justify-content:center;padding:24px;z-index:1000;overflow:auto}.modal.hidden{display:none}.modalbox{background:#fff;width:min(1100px,100%);border-radius:16px;padding:18px;box-shadow:0 20px 60px #0004}.editgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}.editfield label{display:block;font-size:12px;font-weight:700;margin-bottom:4px}.editfield input,.editfield textarea,.editfield select{width:100%}.editfield textarea{min-height:72px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}.edittabs{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;border-bottom:1px solid var(--line);padding-bottom:8px}.edittab{background:#e2e8f0;color:#334155;padding:8px 12px}.edittab.active{background:var(--blue);color:#fff}.editsectiontitle{grid-column:1/-1;font-size:14px;font-weight:800;margin-top:4px;padding:8px 0;border-bottom:1px solid var(--line)}@media(max-width:720px){.editgrid{grid-template-columns:1fr}}
 </style></head><body>
 <header><h1>福島県医師会 災害時医療情報 管理者ページ</h1><p>医療機関別一覧・検索・絞り込み・CSV出力</p></header>
 <main>
@@ -38,7 +38,13 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
       <div><h2 style="margin:0">回答データ編集</h2><div class="small">保存すると、この端末内の回答データが更新されます。</div></div>
       <button id="editClose" class="secondary">閉じる</button>
     </div>
-    <div id="editFields" class="editgrid" style="margin-top:14px"></div>
+    <div class="edittabs">
+<button type="button" class="edittab active" data-edit-tab="basic">基本情報</button>
+<button type="button" class="edittab" data-edit-tab="safety">① 安否確認</button>
+<button type="button" class="edittab" data-edit-tab="emergency">② EMIS緊急時入力</button>
+<button type="button" class="edittab" data-edit-tab="detail">③ 詳細入力</button>
+</div>
+<div id="editFields" class="editgrid" style="margin-top:14px"></div>
     <div class="row" style="justify-content:flex-end;margin-top:16px">
       <button id="editCancel" class="secondary">キャンセル</button>
       <button id="editSave">変更を保存</button>
@@ -64,20 +70,31 @@ r.inpatients,r.transferCount,r.newAccept,r.criticalAccept,r.doctorShort,r.nurseS
 ].map(v=>'<td>'+esc(v??'')+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="38">該当する回答はありません。</td></tr>'}
 ['search','typeFilter','supportFilter'].forEach(id=>$(id).addEventListener('input',render));
 $('csvBtn').onclick=()=>{const a=filtered();const keys=['reportedAt','facility','municipality','facilityType','type','reporter','phone','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];const e=v=>'"'+String(v??'').replaceAll('"','""')+'"';const csv='\ufeff'+keys.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='fukushima_medical_disaster_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url)}
-const editDefs=[
-['type','報告区分'],['reportedAt','報告時刻'],['facility','医療機関名'],['facilityType','医療機関区分'],['municipality','市町村'],['reporter','回答者氏名・役職'],['phone','連絡可能な電話番号'],['emisStatus','EMIS入力状況'],['seismic','震度'],
-['staffSafety','職員の安否'],['facilityDamage','医療機関の被害'],['careStatus','診療状況'],['supportNeeded','支援要請'],['safetyNote','第1報・備考'],
-['building','建物・施設被害'],['buildingRisk','建物の危険状況'],['power','電気'],['water','水道'],['gas','医療ガス'],['comms','通信'],['careEmergency','現在の診療可否'],['emergencyAccept','救急患者受入'],['inpatientImpact','入院患者への影響'],['transferNeed','転院が必要な患者'],['staffShort','人員不足'],['supplyShort','医薬品・医療資機材不足'],['emergencySupport','支援要否'],['transportSupport','患者搬送支援'],['emergencyNote','必要な支援内容'],
-['detailDamage','倒壊・損壊'],['flood','浸水'],['fire','火災'],['gridPower','商用電源'],['generator','非常用発電機'],['fuelHours','燃料残り時間（時間）'],['detailWater','上水'],['tank','受水槽'],['fixedPhone','固定電話'],['internet','インターネット'],['outpatient','外来'],['er','救急'],['ward','入院'],['surgery','手術'],['icu','ICU/HCU'],['dialysis','人工透析'],['delivery','分娩'],['homecare','在宅医療'],['pharmacy','処方・薬剤提供'],['oxygen','酸素・医療ガス供給'],['inpatients','現在の入院患者数'],['transferCount','転院必要患者数'],['newAccept','新規患者受入'],['criticalAccept','重症患者受入'],['doctorShort','医師不足'],['nurseShort','看護師不足'],['supplies','不足している医薬品・物資・資機材'],['detailNote','必要な支援内容・その他詳細']
-];
+const editGroups={
+basic:[['type','報告区分'],['reportedAt','報告時刻'],['facility','医療機関名'],['facilityType','医療機関区分'],['municipality','市町村'],['reporter','回答者氏名・役職'],['phone','連絡可能な電話番号'],['emisStatus','EMIS入力状況'],['seismic','震度']],
+safety:[['staffSafety','職員の安否'],['facilityDamage','医療機関の被害'],['careStatus','診療状況'],['supportNeeded','支援要請'],['safetyNote','第1報・備考']],
+emergency:[['building','建物・施設被害'],['buildingRisk','建物の危険状況'],['power','電気'],['water','水道'],['gas','医療ガス'],['comms','通信'],['careEmergency','現在の診療可否'],['emergencyAccept','救急患者受入'],['inpatientImpact','入院患者への影響'],['transferNeed','転院が必要な患者'],['staffShort','人員不足'],['supplyShort','医薬品・医療資機材不足'],['emergencySupport','支援要否'],['transportSupport','患者搬送支援'],['emergencyNote','必要な支援内容']],
+detail:[['detailDamage','倒壊・損壊'],['flood','浸水'],['fire','火災'],['gridPower','商用電源'],['generator','非常用発電機'],['fuelHours','燃料残り時間（時間）'],['detailWater','上水'],['tank','受水槽'],['fixedPhone','固定電話'],['internet','インターネット'],['outpatient','外来'],['er','救急'],['ward','入院'],['surgery','手術'],['icu','ICU/HCU'],['dialysis','人工透析'],['delivery','分娩'],['homecare','在宅医療'],['pharmacy','処方・薬剤提供'],['oxygen','酸素・医療ガス供給'],['inpatients','現在の入院患者数'],['transferCount','転院必要患者数'],['newAccept','新規患者受入'],['criticalAccept','重症患者受入'],['doctorShort','医師不足'],['nurseShort','看護師不足'],['supplies','不足している医薬品・物資・資機材'],['detailNote','必要な支援内容・その他詳細']]
+};
 const longKeys=new Set(['safetyNote','emergencyNote','supplies','detailNote']);
+let activeEditTab='basic';
 let editingId=null;
+function renderEditTab(){
+ const a=reports(),r=a.find(x=>Number(x.id)===Number(editingId));if(!r)return;
+ document.querySelectorAll('.edittab').forEach(b=>b.classList.toggle('active',b.dataset.editTab===activeEditTab));
+ $('editFields').innerHTML=editGroups[activeEditTab].map(([k,label])=>'<div class="editfield"><label>'+esc(label)+'</label>'+(longKeys.has(k)?'<textarea data-key="'+k+'">'+esc(r[k]??'')+'</textarea>':'<input data-key="'+k+'" value="'+esc(r[k]??'')+'">')+'</div>').join('');
+}
+function saveVisibleEditFields(){
+ if(editingId===null)return;
+ const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
+ $('editFields').querySelectorAll('[data-key]').forEach(el=>a[i][el.dataset.key]=el.value);
+ localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
+}
 function openEdit(id){
  const r=reports().find(x=>Number(x.id)===Number(id));if(!r)return;
- editingId=Number(id);$('editStatus').textContent='';
- $('editFields').innerHTML=editDefs.map(([k,label])=>'<div class="editfield"><label>'+esc(label)+'</label>'+(longKeys.has(k)?'<textarea data-key="'+k+'">'+esc(r[k]??'')+'</textarea>':'<input data-key="'+k+'" value="'+esc(r[k]??'')+'">')+'</div>').join('');
- $('editModal').classList.remove('hidden');
+ editingId=Number(id);activeEditTab='basic';$('editStatus').textContent='';renderEditTab();$('editModal').classList.remove('hidden');
 }
+document.querySelectorAll('.edittab').forEach(b=>b.onclick=()=>{saveVisibleEditFields();activeEditTab=b.dataset.editTab;renderEditTab()});
 function closeEdit(){$('editModal').classList.add('hidden');editingId=null}
 function deleteReport(id){
  const a=reports(),r=a.find(x=>Number(x.id)===Number(id));if(!r)return;
@@ -91,12 +108,10 @@ $('editClose').onclick=closeEdit;$('editCancel').onclick=closeEdit;
 $('editModal').addEventListener('click',e=>{if(e.target===$('editModal'))closeEdit()});
 $('editSave').onclick=()=>{
  if(editingId===null)return;
+ saveVisibleEditFields();
  const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
- $('editFields').querySelectorAll('[data-key]').forEach(el=>a[i][el.dataset.key]=el.value);
- a[i].updatedAt=new Date().toISOString();
- localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
- $('editStatus').textContent='変更を保存しました。';$('editStatus').className='status';
- render();setTimeout(closeEdit,500);
+ a[i].updatedAt=new Date().toISOString();localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
+ $('editStatus').textContent='変更を保存しました。';$('editStatus').className='status';render();setTimeout(closeEdit,500);
 };
 
 refreshAuth();
