@@ -1,104 +1,42 @@
 <!doctype html>
-<html lang="ja">
-<head>
+<html lang="ja"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>管理者ページ｜福島県 災害時情報共有システム</title>
+<title>管理者ページ｜福島県医師会 災害時医療情報伝達アプリ</title>
 <style>
-:root{--nav:#14395d;--blue:#2563eb;--bg:#f4f7fb;--text:#172033;--muted:#64748b;--line:#dbe3ee;--red:#dc2626;--amber:#d97706}
+:root{--blue:#2563eb;--bg:#f4f7fb;--text:#172033;--muted:#64748b;--line:#dbe3ee;--red:#dc2626;--amber:#d97706}
 *{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
-header{background:linear-gradient(135deg,#10314f,#1d5b8f);color:#fff;padding:16px}
-header h1{font-size:20px;margin:0}header p{font-size:12px;margin:5px 0 0;opacity:.9}
-main{max-width:1200px;margin:auto;padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px #1e293b0a;margin-bottom:14px}
+header{background:linear-gradient(135deg,#10314f,#1d5b8f);color:#fff;padding:16px}header h1{font-size:20px;margin:0}header p{font-size:12px;margin:5px 0 0;opacity:.9}
+main{max-width:1280px;margin:auto;padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px #1e293b0a;margin-bottom:14px}
 button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}button.secondary{background:#e2e8f0;color:#1e293b}
-input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:220px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
-.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:1100px;font-size:13px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}
+input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:220px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:1450px;font-size:13px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}
 .bad{color:var(--red);font-weight:700}.warn{color:var(--amber);font-weight:700}.status{margin-top:10px;font-size:13px}.login{max-width:480px;margin:45px auto}
-</style>
-</head>
-<body>
-<header><h1>管理者ページ</h1><p>災害時情報共有システム｜一覧・絞り込み・CSV出力</p></header>
+</style></head><body>
+<header><h1>福島県医師会 災害時医療情報 管理者ページ</h1><p>医療機関別一覧・検索・絞り込み・CSV出力</p></header>
 <main>
 <section id="loginView" class="card login">
-<h2>管理者ログイン</h2>
-<p class="small" id="setupText"></p>
+<h2>管理者ログイン</h2><p class="small" id="setupText"></p>
 <label>管理者ID</label><input id="adminId" class="grow" autocomplete="username">
 <label style="display:block;margin-top:10px">パスワード</label><input id="adminPw" class="grow" type="password" autocomplete="current-password">
-<div style="margin-top:14px"><button id="loginBtn">ログイン / 初回設定</button></div>
-<div id="loginStatus" class="status bad"></div>
+<div style="margin-top:14px"><button id="loginBtn">ログイン / 初回設定</button></div><div id="loginStatus" class="status bad"></div>
 </section>
-
 <section id="dashView" class="hidden">
-<div class="card">
-<div class="row" style="justify-content:space-between">
-<div><h2 style="margin:0">回答一覧</h2><div class="small">入力フォームと同一ドメイン上の保存データを表示します。</div></div>
-<div><button id="csvBtn">CSV出力</button> <button id="logoutBtn" class="secondary">ログアウト</button></div>
-</div>
-<div class="row" style="margin-top:14px">
-<input id="search" class="grow" placeholder="施設名・市町村で検索">
-<select id="typeFilter"><option value="">報告区分：すべて</option><option value="first">第1報</option><option value="detail">詳細</option><option value="support">支援要請</option></select>
-<select id="supportFilter"><option value="">支援：すべて</option><option value="needed">支援必要</option><option value="urgent">緊急</option></select>
-</div>
-<div id="summary" class="small" style="margin-top:10px"></div>
-</div>
-<div class="card">
-<div class="tablewrap">
-<table class="admin-table"><thead><tr>
-<th>報告時刻</th><th>施設</th><th>種別</th><th>市町村</th><th>報告区分</th><th>施設被害</th><th>人的被害</th><th>電気</th><th>水道</th><th>通信</th><th>支援</th><th>緊急度</th><th>搬送人数</th><th>連絡先</th>
-</tr></thead><tbody id="rows"></tbody></table>
-</div>
-</div>
-</section>
-</main>
+<div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">回答一覧</h2><div class="small">①安否確認／②EMIS緊急時入力／③詳細入力を一覧表示します。</div></div><div><button id="csvBtn">CSV出力</button> <button id="logoutBtn" class="secondary">ログアウト</button></div></div>
+<div class="row" style="margin-top:14px"><input id="search" class="grow" placeholder="医療機関名・市町村で検索"><select id="typeFilter"><option value="">報告区分：すべて</option><option value="safety">①安否確認</option><option value="emergency">②緊急時入力</option><option value="detail">③詳細入力</option></select><select id="supportFilter"><option value="">支援：すべて</option><option value="needed">支援必要</option><option value="urgent">緊急</option></select></div>
+<div id="summary" class="small" style="margin-top:10px"></div></div>
+<div class="card"><div class="tablewrap"><table class="admin-table"><thead><tr><th>報告時刻</th><th>医療機関名</th><th>市町村</th><th>区分</th><th>報告区分</th><th>EMIS状況</th><th>職員安否</th><th>施設被害</th><th>診療状況</th><th>電気</th><th>水道</th><th>通信</th><th>救急受入</th><th>転院</th><th>支援要請</th><th>連絡先</th></tr></thead><tbody id="rows"></tbody></table></div></div>
+</section></main>
 <script>
-const $=id=>document.getElementById(id);
-function reports(){return JSON.parse(localStorage.getItem('welfareDisasterReports')||'[]')}
+const $=id=>document.getElementById(id);function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
 async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function conf(){return JSON.parse(localStorage.getItem('disasterAdminConf')||'null')}
-function logged(){return sessionStorage.getItem('disasterAdminLogged')==='1'}
-function refreshAuth(){
- const ok=logged();$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok);
- $('setupText').textContent=conf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。';
- if(ok)render();
-}
-$('loginBtn').onclick=async()=>{
- const id=$('adminId').value.trim(),pw=$('adminPw').value;
- if(!id||!pw){$('loginStatus').textContent='IDとパスワードを入力してください。';return}
- const h=await hash(pw),c=conf();
- if(!c){localStorage.setItem('disasterAdminConf',JSON.stringify({id,hash:h}));sessionStorage.setItem('disasterAdminLogged','1');$('loginStatus').textContent='';refreshAuth();return}
- if(c.id===id&&c.hash===h){sessionStorage.setItem('disasterAdminLogged','1');$('adminPw').value='';$('loginStatus').textContent='';refreshAuth()}
- else $('loginStatus').textContent='IDまたはパスワードが違います。';
-};
-$('logoutBtn').onclick=()=>{sessionStorage.removeItem('disasterAdminLogged');refreshAuth()}
+function conf(){return JSON.parse(localStorage.getItem('fmaAdminConf')||'null')}function logged(){return sessionStorage.getItem('fmaAdminLogged')==='1'}
+function refreshAuth(){const ok=logged();$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok);$('setupText').textContent=conf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。';if(ok)render()}
+$('loginBtn').onclick=async()=>{const id=$('adminId').value.trim(),pw=$('adminPw').value;if(!id||!pw){$('loginStatus').textContent='IDとパスワードを入力してください。';return}const h=await hash(pw),c=conf();if(!c){localStorage.setItem('fmaAdminConf',JSON.stringify({id,hash:h}));sessionStorage.setItem('fmaAdminLogged','1');$('loginStatus').textContent='';refreshAuth();return}if(c.id===id&&c.hash===h){sessionStorage.setItem('fmaAdminLogged','1');$('adminPw').value='';$('loginStatus').textContent='';refreshAuth()}else $('loginStatus').textContent='IDまたはパスワードが違います。'}
+$('logoutBtn').onclick=()=>{sessionStorage.removeItem('fmaAdminLogged');refreshAuth()}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function filtered(){
- const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;
- return reports().filter(r=>{
-   const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q);
-   const typeOk=!t||r.type===t;
-   const urgent=r.needSupport==='緊急に必要'||r.urgency==='最優先';
-   const needed=urgent||r.needSupport==='必要'||String(r.supportNeed||'').trim()!=='';
-   const supOk=!s||(s==='urgent'?urgent:needed);
-   return hit&&typeOk&&supOk;
- });
-}
-function render(){
- const all=reports(),a=filtered();
- $('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急 '+all.filter(r=>r.needSupport==='緊急に必要'||r.urgency==='最優先').length+'件';
- $('rows').innerHTML=a.map(r=>'<tr>'+[
-   r.reportedAt,r.facility,r.facilityType,r.municipality,{first:'第1報',detail:'詳細',support:'支援要請'}[r.type]||r.type,
-   r.damage,r.casualty,r.power,r.water,r.comms,r.supportNeed||r.needSupport,r.urgency,r.evacCount,r.phone
- ].map(v=>'<td>'+esc(v||'')+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="14">該当する回答はありません。</td></tr>';
-}
+function filtered(){const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;return reports().filter(r=>{const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q);const typeOk=!t||r.type===t;const urgent=r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要';const needed=urgent||r.supportNeeded==='あり'||r.emergencySupport==='要'||String(r.emergencyNote||r.detailNote||'').trim()!=='';return hit&&typeOk&&(!s||(s==='urgent'?urgent:needed))})}
+function render(){const all=reports(),a=filtered();$('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+all.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';$('rows').innerHTML=a.map(r=>'<tr>'+[r.reportedAt,r.facility,r.municipality,r.facilityType,{safety:'①安否確認',emergency:'②緊急時入力',detail:'③詳細入力'}[r.type]||r.type,r.emisStatus,r.staffSafety,r.facilityDamage||r.building,r.careStatus||r.careEmergency,r.power||r.gridPower,r.water||r.detailWater,r.comms||r.internet,r.emergencyAccept,r.transferNeed,r.supportNeeded||r.emergencySupport,r.phone].map(v=>'<td>'+esc(v||'')+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="16">該当する回答はありません。</td></tr>'}
 ['search','typeFilter','supportFilter'].forEach(id=>$(id).addEventListener('input',render));
-$('csvBtn').onclick=()=>{
- const a=filtered(),keys=['reportedAt','facility','facilityType','municipality','type','reporter','phone','damage','casualty','stay','needSupport','residents','staff','power','water','food','meds','medicalCare','comms','supportNeed','evacCount','urgency','notes'];
- const labels=['報告時刻','施設名','施設種別','市町村','報告区分','報告者','電話','施設被害','人的被害','施設内避難','外部支援','利用者数','勤務可能職員数','電気','水道','食料','医薬品・衛生材料','医療的ケア','通信','支援内容','避難・搬送人数','緊急度','備考'];
- const e=v=>'"'+String(v??'').replaceAll('"','""')+'"';
- const csv='\ufeff'+labels.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');
- const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='disaster_reports_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url);
-};
+$('csvBtn').onclick=()=>{const a=filtered();const keys=['reportedAt','facility','municipality','facilityType','type','reporter','phone','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];const e=v=>'"'+String(v??'').replaceAll('"','""')+'"';const csv='\ufeff'+keys.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='fukushima_medical_disaster_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url)}
 refreshAuth();
-</script>
-</body>
-</html>
+</script></body></html>
