@@ -42,6 +42,14 @@
   footer{font-size:.78rem;color:#687384;text-align:center;padding:20px}
   @media(max-width:760px){.tabs,.grid,.grid3{grid-template-columns:1fr}.tab{padding:12px 8px}.card{padding:15px}.wrap{padding-left:10px;padding-right:10px}}
   @media print{header,.tabs,.notice,.actions,footer{display:none!important}.form-panel{display:block!important}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}body{background:#fff}.wrap{max-width:none}}
+
+/* FMA_ADMIN_V2 */
+.admin-open{position:fixed;right:14px;top:14px;z-index:30;border:1px solid rgba(255,255,255,.45);background:#243447;color:#fff;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}
+.admin-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:100;padding:18px;overflow:auto}
+.admin-overlay.show{display:block}.admin-box{max-width:1180px;margin:25px auto;background:#f4f7fb;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.admin-loginbox{max-width:480px;margin:40px auto;background:#fff;padding:20px;border-radius:12px}.admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.admin-tools input,.admin-tools select{max-width:240px}
+.admin-tablewrap{overflow:auto;background:#fff;border:1px solid #dbe3ee;border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:1250px;font-size:.82rem}.admin-table th,.admin-table td{padding:8px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}.admin-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.admin-note2{font-size:.82rem;color:#6b7280;line-height:1.5}.admin-bad{color:#c62828;font-weight:700}.admin-warn{color:#e08a00;font-weight:700}
+@media(max-width:760px){.admin-row{grid-template-columns:1fr}.admin-open{top:auto;bottom:12px;right:12px}}
 </style>
 </head>
 <body>
@@ -164,6 +172,32 @@
   <div id="status" class="status"></div>
 </div>
 <footer>Prototype for Fukushima Prefecture Medical Association disaster information collection</footer>
+<button class="admin-open" id="adminOpen">🔒 管理者</button>
+<div class="admin-overlay" id="adminOverlay">
+  <div class="admin-box">
+    <div id="adminLoginView" class="admin-loginbox">
+      <div class="admin-head"><h2 style="margin:0">管理者ログイン</h2><button class="action clear" id="adminClose1">閉じる</button></div>
+      <p class="admin-note2" id="adminSetupNote"></p>
+      <div class="admin-row">
+        <div><label>管理者ID</label><input id="adminId2" type="text" autocomplete="username"></div>
+        <div><label>パスワード</label><input id="adminPw2" type="password" autocomplete="current-password"></div>
+      </div>
+      <div style="margin-top:14px"><button class="action save" id="adminLogin2">ログイン / 初回設定</button></div>
+      <div class="status" id="adminLoginStatus2"></div>
+    </div>
+    <div id="adminDashView" style="display:none">
+      <div class="admin-head"><div><h2 style="margin:0">災害時医療機関 回答一覧</h2><div class="admin-note2">同一医療機関は「医療機関名＋市町村」で統合し、最新回答を1行に表示します。</div></div><div><button class="action clear" id="adminLogout2">ログアウト</button> <button class="action clear" id="adminClose2">閉じる</button></div></div>
+      <div class="admin-tools">
+        <input id="adminSearch2" type="text" placeholder="医療機関名・市町村で検索">
+        <select id="adminCare2"><option value="">診療状況：すべて</option><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option><option>未確認</option></select>
+        <select id="adminSupport2"><option value="">支援要請：すべて</option><option>あり</option><option>なし</option></select>
+        <button class="action csv" id="adminCsv2">一覧CSV出力</button>
+      </div>
+      <div id="adminCounts2" class="admin-note2"></div>
+      <div class="admin-tablewrap"><table class="admin-table"><thead><tr><th>医療機関名</th><th>市町村</th><th>区分</th><th>職員安否</th><th>施設被害</th><th>診療状況</th><th>支援要請</th><th>電気</th><th>水道</th><th>通信</th><th>救急受入</th><th>転院</th><th>人員不足</th><th>物資不足</th><th>電話</th><th>最終更新</th></tr></thead><tbody id="adminBody2"></tbody></table></div>
+    </div>
+  </div>
+</div>
 <script>
 const tabs=[...document.querySelectorAll('.tab')];
 const panels=[...document.querySelectorAll('.form-panel')];
@@ -178,10 +212,60 @@ function esc(v){return '"'+String(v??'').replaceAll('"','""')+'"'}
 function downloadCSV(){const d=getData();const labels={facility:'医療機関名',municipality:'所在地',facilityType:'医療機関区分',responder:'回答者',phone:'電話',reportedAt:'回答日時',staffSafety:'職員安否',facilityDamage:'医療機関被害',careStatus:'診療状況',supportNeeded:'支援要請',safetyNote:'安否確認備考',emisStatus:'EMIS入力状況',building:'建物施設被害',power:'電気',water:'水道',gas:'医療ガス',comms:'通信',careEmergency:'診療可否',emergencyAccept:'救急患者受入',inpatientImpact:'入院患者影響',transferNeed:'転院必要患者',staffShort:'人員不足',supplyShort:'資機材不足',emergencyNote:'緊急支援要請',detailDamage:'倒壊損壊',flood:'浸水',fire:'火災',gridPower:'商用電源',generator:'非常用発電機',fuelHours:'燃料残量時間',detailWater:'上水',tank:'受水槽',internet:'インターネット',outpatient:'外来',er:'救急',ward:'入院',surgery:'手術',icu:'ICU/HCU',dialysis:'人工透析',delivery:'分娩',homecare:'在宅医療',pharmacy:'処方薬剤提供',inpatients:'入院患者数',transferCount:'転院必要患者数',newAccept:'新規患者受入',criticalAccept:'重症患者受入',doctorShort:'医師不足',nurseShort:'看護師不足',supplies:'不足物資',detailNote:'詳細支援要請'};
   const keys=Object.keys(labels); const row=keys.map(k=>esc(Array.isArray(d[k])?d[k].join(' / '):d[k])).join(','); const csv='\ufeff'+keys.map(k=>esc(labels[k])).join(',')+'\n'+row+'\n'; const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`災害医療情報_${d.facility||'未記入'}_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)
 }
-document.getElementById('saveBtn').onclick=save;document.getElementById('csvBtn').onclick=downloadCSV;document.getElementById('printBtn').onclick=()=>window.print();document.getElementById('clearBtn').onclick=()=>{if(confirm('入力内容をすべてクリアしますか？')){localStorage.removeItem('fma_disaster_form');location.reload()}};
+document.getElementById('saveBtn').onclick=registerRecord;document.getElementById('csvBtn').onclick=downloadCSV;document.getElementById('printBtn').onclick=()=>window.print();document.getElementById('clearBtn').onclick=()=>{if(confirm('入力内容をすべてクリアしますか？')){localStorage.removeItem('fma_disaster_form');location.reload()}};
 setData(JSON.parse(localStorage.getItem('fma_disaster_form')||'null'));
 const active=localStorage.getItem('fma_active_tab');if(active){document.querySelector(`.tab[data-tab="${active}"]`)?.click()}
 let timer;document.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(save,800)});
+
+/* FMA_ADMIN_V2 */
+function fmaKey(d){return (String(d.municipality||'').trim()+'__'+String(d.facility||'').trim()).toLowerCase().replace(/[\s　]+/g,'')}
+function registerRecord(){
+  const d=getData();
+  if(!String(d.facility||'').trim()||!String(d.municipality||'').trim()){alert('医療機関名と所在地（市町村）は必須です。');return}
+  const all=JSON.parse(localStorage.getItem('fma_disaster_records')||'{}');
+  d.updatedAt=new Date().toISOString();
+  all[fmaKey(d)]={...(all[fmaKey(d)]||{}),...d};
+  localStorage.setItem('fma_disaster_records',JSON.stringify(all));
+  localStorage.setItem('fma_disaster_form',JSON.stringify(d));
+  document.getElementById('status').textContent='回答を登録しました：'+new Date().toLocaleString('ja-JP');
+}
+async function fmaHash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function fmaAdminConf(){return JSON.parse(localStorage.getItem('fma_admin_conf')||'null')}
+function fmaAdminLogged(){return sessionStorage.getItem('fma_admin_ok')==='1'}
+function fmaShowAdmin(){
+  const ok=fmaAdminLogged();document.getElementById('adminLoginView').style.display=ok?'none':'block';document.getElementById('adminDashView').style.display=ok?'block':'none';
+  document.getElementById('adminSetupNote').textContent=fmaAdminConf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。パスワードはハッシュ化して保存します。';
+  if(ok)fmaRender();
+}
+document.getElementById('adminOpen').onclick=()=>{document.getElementById('adminOverlay').classList.add('show');fmaShowAdmin()}
+document.getElementById('adminClose1').onclick=document.getElementById('adminClose2').onclick=()=>document.getElementById('adminOverlay').classList.remove('show')
+document.getElementById('adminLogin2').onclick=async()=>{
+  const id=document.getElementById('adminId2').value.trim(),pw=document.getElementById('adminPw2').value;if(!id||!pw){document.getElementById('adminLoginStatus2').textContent='IDとパスワードを入力してください。';return}
+  const h=await fmaHash(pw),conf=fmaAdminConf();
+  if(!conf){localStorage.setItem('fma_admin_conf',JSON.stringify({id,hash:h}));sessionStorage.setItem('fma_admin_ok','1');fmaShowAdmin();return}
+  if(id===conf.id&&h===conf.hash){sessionStorage.setItem('fma_admin_ok','1');document.getElementById('adminPw2').value='';document.getElementById('adminLoginStatus2').textContent='';fmaShowAdmin()}else document.getElementById('adminLoginStatus2').textContent='IDまたはパスワードが違います。'
+}
+document.getElementById('adminLogout2').onclick=()=>{sessionStorage.removeItem('fma_admin_ok');fmaShowAdmin()}
+function fmaEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function fmaRows(){
+  const q=String(document.getElementById('adminSearch2').value||'').toLowerCase(),care=document.getElementById('adminCare2').value,sup=document.getElementById('adminSupport2').value;
+  return Object.values(JSON.parse(localStorage.getItem('fma_disaster_records')||'{}')).filter(r=>(!q||(String(r.facility||'')+String(r.municipality||'')).toLowerCase().includes(q))&&(!care||r.careStatus===care)&&(!sup||r.supportNeeded===sup)).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')))
+}
+function fmaCls(v){return ['診療不能','あり','断水','不通','使用不能','不可'].includes(v)?'admin-bad':['一部診療可能','確認中','制限あり','一部可能','一部不通'].includes(v)?'admin-warn':''}
+function fmaRender(){
+  const all=Object.values(JSON.parse(localStorage.getItem('fma_disaster_records')||'{}')),rows=fmaRows();
+  document.getElementById('adminCounts2').textContent='登録 '+all.length+'施設 ／ 支援要請あり '+all.filter(x=>x.supportNeeded==='あり').length+' ／ 診療不能 '+all.filter(x=>x.careStatus==='診療不能').length;
+  document.getElementById('adminBody2').innerHTML=rows.map(r=>'<tr>'+[
+    r.facility,r.municipality,r.facilityType,r.staffSafety,r.facilityDamage,r.careStatus,r.supportNeeded,r.power,r.water,r.comms,r.emergencyAccept,r.transferNeed,r.staffShort,r.supplyShort,r.phone,r.updatedAt?new Date(r.updatedAt).toLocaleString('ja-JP'):''
+  ].map(v=>'<td class="'+fmaCls(v)+'">'+fmaEsc(v)+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="16">回答はありません。</td></tr>'
+}
+['adminSearch2','adminCare2','adminSupport2'].forEach(id=>document.getElementById(id).addEventListener('input',fmaRender))
+document.getElementById('adminCsv2').onclick=()=>{
+  const rows=fmaRows(),keys=['facility','municipality','facilityType','responder','phone','reportedAt','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','emisStatus','building','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote','updatedAt'];
+  const labels=['医療機関名','市町村','区分','回答者','電話','回答日時','職員安否','医療機関被害','診療状況','支援要請','安否確認備考','EMIS入力状況','建物施設被害','電気','水道','医療ガス','通信','診療可否','救急患者受入','入院患者影響','転院必要患者','人員不足','資機材不足','緊急支援要請','倒壊損壊','浸水','火災','商用電源','非常用発電機','燃料残量時間','上水','受水槽','インターネット','外来','救急','入院','手術','ICU/HCU','人工透析','分娩','在宅医療','処方薬剤提供','入院患者数','転院必要患者数','新規患者受入','重症患者受入','医師不足','看護師不足','不足物資','詳細支援要請','最終更新'];
+  const e=v=>'"'+String(Array.isArray(v)?v.join(' / '):(v??'')).replaceAll('"','""')+'"';
+  const csv='\ufeff'+labels.map(e).join(',')+'\n'+rows.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='福島県医師会_災害医療情報一覧_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href)
+}
 </script>
 </body>
 </html>
