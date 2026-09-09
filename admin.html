@@ -11,7 +11,7 @@ button{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:poin
 input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.grow{flex:1;min-width:220px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
 .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:4200px;font-size:13px}.admin-table th,.admin-table td{padding:9px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}
 .bad{color:var(--red);font-weight:700}.warn{color:var(--amber);font-weight:700}.status{margin-top:10px;font-size:13px}.login{max-width:480px;margin:45px auto}
-.editbtn{padding:6px 10px;font-size:12px;white-space:nowrap}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-start;justify-content:center;padding:24px;z-index:1000;overflow:auto}.modal.hidden{display:none}.modalbox{background:#fff;width:min(1100px,100%);border-radius:16px;padding:18px;box-shadow:0 20px 60px #0004}.editgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}.editfield label{display:block;font-size:12px;font-weight:700;margin-bottom:4px}.editfield input,.editfield textarea,.editfield select{width:100%}.editfield textarea{min-height:72px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}@media(max-width:720px){.editgrid{grid-template-columns:1fr}}
+.editbtn{padding:6px 10px;font-size:12px;white-space:nowrap}.deletebtn{padding:6px 10px;font-size:12px;white-space:nowrap;background:var(--red);margin-left:5px}.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:flex-start;justify-content:center;padding:24px;z-index:1000;overflow:auto}.modal.hidden{display:none}.modalbox{background:#fff;width:min(1100px,100%);border-radius:16px;padding:18px;box-shadow:0 20px 60px #0004}.editgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 14px}.editfield label{display:block;font-size:12px;font-weight:700;margin-bottom:4px}.editfield input,.editfield textarea,.editfield select{width:100%}.editfield textarea{min-height:72px;padding:10px;border:1px solid #cbd5e1;border-radius:9px;font:inherit}@media(max-width:720px){.editgrid{grid-template-columns:1fr}}
 </style></head><body>
 <header><h1>福島県医師会 災害時医療情報 管理者ページ</h1><p>医療機関別一覧・検索・絞り込み・CSV出力</p></header>
 <main>
@@ -56,7 +56,7 @@ $('loginBtn').onclick=async()=>{const id=$('adminId').value.trim(),pw=$('adminPw
 $('logoutBtn').onclick=()=>{sessionStorage.removeItem('fmaAdminLogged');refreshAuth()}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function filtered(){const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;return reports().filter(r=>{const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q);const typeOk=!t||r.type===t;const urgent=r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要';const needed=urgent||r.supportNeeded==='あり'||r.emergencySupport==='要'||String(r.emergencyNote||r.detailNote||'').trim()!=='';return hit&&typeOk&&(!s||(s==='urgent'?urgent:needed))})}
-function render(){const all=reports(),a=filtered();$('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+all.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';const typeLabel={safety:'①安否確認',emergency:'②緊急時入力',detail:'③詳細入力'};$('rows').innerHTML=a.map(r=>'<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button></td>'+[
+function render(){const all=reports(),a=filtered();$('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+all.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';const typeLabel={safety:'①安否確認',emergency:'②緊急時入力',detail:'③詳細入力'};$('rows').innerHTML=a.map(r=>'<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td>'+[
 r.reportedAt,r.facility,r.municipality,r.facilityType,typeLabel[r.type]||r.type,r.reporter,r.phone,r.emisStatus,r.seismic,
 r.detailDamage,r.flood,r.fire,r.gridPower,r.generator,r.fuelHours,r.detailWater,r.tank,r.fixedPhone,r.internet,
 r.outpatient,r.er,r.ward,r.surgery,r.icu,r.dialysis,r.delivery,r.homecare,r.pharmacy,r.oxygen,
@@ -79,6 +79,14 @@ function openEdit(id){
  $('editModal').classList.remove('hidden');
 }
 function closeEdit(){$('editModal').classList.add('hidden');editingId=null}
+function deleteReport(id){
+ const a=reports(),r=a.find(x=>Number(x.id)===Number(id));if(!r)return;
+ const name=r.facility||'この回答';
+ if(!confirm('「'+name+'」の回答データを消去します。\nこの操作は元に戻せません。よろしいですか？'))return;
+ const next=a.filter(x=>Number(x.id)!==Number(id));
+ localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(next));
+ render();
+}
 $('editClose').onclick=closeEdit;$('editCancel').onclick=closeEdit;
 $('editModal').addEventListener('click',e=>{if(e.target===$('editModal'))closeEdit()});
 $('editSave').onclick=()=>{
