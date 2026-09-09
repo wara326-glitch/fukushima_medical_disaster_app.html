@@ -1,271 +1,110 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>福島県医師会 災害時医療機関情報フォーム</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>福島県 福祉施設 災害時情報共有システム</title>
 <style>
-  :root{
-    --bg:#f4f7fb; --card:#fff; --text:#1f2937; --muted:#6b7280; --line:#dbe3ee;
-    --primary:#0f4c81; --primary2:#1769aa; --danger:#c62828; --warn:#e08a00; --ok:#17823b;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:var(--bg);color:var(--text)}
-  header{background:linear-gradient(135deg,var(--primary),var(--primary2));color:#fff;padding:20px 16px;box-shadow:0 2px 10px rgba(0,0,0,.12)}
-  header .inner,.wrap{max-width:1100px;margin:0 auto}
-  h1{font-size:1.45rem;margin:0 0 6px} header p{margin:0;opacity:.9;font-size:.92rem}
-  .wrap{padding:18px 14px 40px}
-  .notice{background:#fff7e6;border:1px solid #f3d19c;border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:.9rem;line-height:1.6}
-  .tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
-  .tab{border:0;border-radius:12px;padding:14px 10px;background:#e9eef5;color:#263445;font-weight:700;cursor:pointer}
-  .tab.active{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(15,76,129,.22)}
-  .card{background:var(--card);border-radius:14px;box-shadow:0 2px 12px rgba(31,41,55,.08);padding:18px;margin-bottom:16px}
-  .section-title{font-size:1.05rem;margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid #edf1f6}
-  .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-  .grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-  label{display:block;font-size:.88rem;font-weight:700;margin-bottom:6px}
-  .req::after{content:" 必須";color:#b91c1c;font-size:.75rem;font-weight:600}
-  input[type=text],input[type=tel],input[type=number],input[type=datetime-local],select,textarea{
-    width:100%;border:1px solid #cfd8e3;border-radius:9px;padding:10px 11px;font-size:16px;background:#fff;color:var(--text)
-  }
-  textarea{min-height:84px;resize:vertical}
-  .choices{display:flex;flex-wrap:wrap;gap:8px}
-  .choices label{font-weight:500;margin:0;background:#f7f9fc;border:1px solid #d7e0eb;padding:9px 10px;border-radius:9px;cursor:pointer}
-  .choices input{margin-right:6px}
-  .form-panel{display:none}.form-panel.active{display:block}
-  .actions{display:flex;flex-wrap:wrap;gap:10px;position:sticky;bottom:0;background:rgba(244,247,251,.95);backdrop-filter:blur(8px);padding:12px 0 4px;z-index:5}
-  button.action{border:0;border-radius:10px;padding:11px 16px;font-size:.95rem;font-weight:700;cursor:pointer}
-  .save{background:var(--primary);color:#fff}.csv{background:#116d45;color:#fff}.clear{background:#eceff3;color:#374151}.print{background:#5b4bb7;color:#fff}
-  .status{font-size:.86rem;color:var(--muted);margin-top:8px}
-  .small{font-size:.82rem;color:var(--muted);line-height:1.55}
-  .badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e8f1fa;color:#0f4c81;font-size:.76rem;font-weight:700}
-  footer{font-size:.78rem;color:#687384;text-align:center;padding:20px}
-  @media(max-width:760px){.tabs,.grid,.grid3{grid-template-columns:1fr}.tab{padding:12px 8px}.card{padding:15px}.wrap{padding-left:10px;padding-right:10px}}
-  @media print{header,.tabs,.notice,.actions,footer{display:none!important}.form-panel{display:block!important}.card{box-shadow:none;border:1px solid #ddd;break-inside:avoid}body{background:#fff}.wrap{max-width:none}}
-
-/* FMA_ADMIN_V2 */
-.admin-open{position:fixed;right:14px;top:14px;z-index:30;border:1px solid rgba(255,255,255,.45);background:#243447;color:#fff;border-radius:10px;padding:9px 13px;font-weight:700;cursor:pointer}
-.admin-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.72);z-index:100;padding:18px;overflow:auto}
-.admin-overlay.show{display:block}.admin-box{max-width:1180px;margin:25px auto;background:#f4f7fb;border-radius:14px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.admin-loginbox{max-width:480px;margin:40px auto;background:#fff;padding:20px;border-radius:12px}.admin-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.admin-tools input,.admin-tools select{max-width:240px}
-.admin-tablewrap{overflow:auto;background:#fff;border:1px solid #dbe3ee;border-radius:10px}.admin-table{border-collapse:collapse;width:100%;min-width:1250px;font-size:.82rem}.admin-table th,.admin-table td{padding:8px;border-bottom:1px solid #edf1f5;text-align:left;white-space:nowrap}.admin-table th{background:#eef4fa}.admin-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.admin-note2{font-size:.82rem;color:#6b7280;line-height:1.5}.admin-bad{color:#c62828;font-weight:700}.admin-warn{color:#e08a00;font-weight:700}
-@media(max-width:760px){.admin-row{grid-template-columns:1fr}.admin-open{top:auto;bottom:12px;right:12px}}
+:root{--nav:#14395d;--blue:#2563eb;--bg:#f4f7fb;--card:#fff;--text:#172033;--muted:#64748b;--red:#dc2626;--amber:#d97706;--green:#059669;--line:#dbe3ee}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,#10314f,#1d5b8f);color:#fff;padding:16px;position:sticky;top:0;z-index:10}
+header h1{font-size:20px;margin:0} header p{font-size:12px;margin:5px 0 0;opacity:.9}
+main{max-width:1100px;margin:auto;padding:16px}.grid{display:grid;gap:14px}.home{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px #1e293b0a}.action{cursor:pointer}.action:hover{transform:translateY(-2px)}
+.icon{font-size:30px}.badge{display:inline-block;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700}.r{background:#fee2e2;color:#991b1b}.y{background:#fef3c7;color:#92400e}.b{background:#dbeafe;color:#1e40af}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff}button.secondary{background:#e2e8f0;color:#1e293b}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:720px){.row{grid-template-columns:1fr}}
+label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,select,textarea{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;font:inherit}textarea{min-height:86px}
+.section{margin-top:18px;border-top:1px solid var(--line);padding-top:10px}.hidden{display:none}.small{font-size:12px;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:9px;text-align:left}.tablewrap{overflow:auto}
+.status{padding:9px;border-radius:8px;margin:10px 0}.ok{background:#d1fae5}.warn{background:#fef3c7}.danger{background:#fee2e2}
 </style>
 </head>
 <body>
-<header>
-  <div class="inner">
-    <h1>福島県医師会 災害時医療機関情報フォーム</h1>
-    <p>安否確認・EMIS緊急時入力補助・詳細状況入力</p>
-  </div>
-</header>
-<div class="wrap">
-  <div class="notice">
-    <strong>重要：</strong>本アプリは県医師会・郡市医師会等での情報集約を想定した補助フォームです。EMIS対象医療機関は、必要に応じて<strong>EMIS本体にも正式入力</strong>してください。<br>
-    <span class="small">この版はサーバー送信を行わず、入力内容は使用中の端末内（ブラウザ）に保存されます。</span>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="safety">① 安否確認<br><span class="small" style="color:inherit">30秒目安</span></button>
-    <button class="tab" data-tab="emergency">② EMIS緊急時入力補助<br><span class="small" style="color:inherit">2分目安</span></button>
-    <button class="tab" data-tab="detail">③ 詳細入力<br><span class="small" style="color:inherit">5分目安</span></button>
-  </div>
-
-  <div class="card">
-    <h2 class="section-title">医療機関基本情報 <span class="badge">3フォーム共通</span></h2>
-    <div class="grid">
-      <div><label class="req">医療機関名</label><input id="facility" type="text" placeholder="例：○○医院"></div>
-      <div><label class="req">所在地（市町村）</label><input id="municipality" type="text" placeholder="例：郡山市"></div>
-      <div><label>医療機関区分</label><select id="facilityType"><option value="">選択してください</option><option>病院</option><option>有床診療所</option><option>無床診療所</option><option>歯科診療所</option><option>その他</option></select></div>
-      <div><label>回答者氏名・役職</label><input id="responder" type="text" placeholder="例：院長 ○○ ○○"></div>
-      <div><label>連絡先電話番号</label><input id="phone" type="tel" placeholder="例：024-000-0000"></div>
-      <div><label>回答日時</label><input id="reportedAt" type="datetime-local"></div>
-    </div>
-  </div>
-
-  <section id="safety" class="form-panel active">
-    <div class="card">
-      <h2 class="section-title">① 災害時の安否確認</h2>
-      <div class="grid">
-        <div><label class="req">職員の安否</label><div class="choices"><label><input type="radio" name="staffSafety" value="問題なし">問題なし</label><label><input type="radio" name="staffSafety" value="負傷者あり">負傷者あり</label><label><input type="radio" name="staffSafety" value="確認中">確認中</label></div></div>
-        <div><label class="req">医療機関の被害</label><div class="choices"><label><input type="radio" name="facilityDamage" value="なし">なし</label><label><input type="radio" name="facilityDamage" value="あり">あり</label><label><input type="radio" name="facilityDamage" value="確認中">確認中</label></div></div>
-        <div><label class="req">診療状況</label><select id="careStatus"><option value="">選択してください</option><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option><option>未確認</option></select></div>
-        <div><label class="req">支援要請</label><div class="choices"><label><input type="radio" name="supportNeeded" value="なし">なし</label><label><input type="radio" name="supportNeeded" value="あり">あり</label></div></div>
-      </div>
-      <div style="margin-top:14px"><label>被害・支援要請の概要</label><textarea id="safetyNote" placeholder="例：停電中。自家発電で診療継続可能。給水支援を希望。"></textarea></div>
-    </div>
-  </section>
-
-  <section id="emergency" class="form-panel">
-    <div class="card">
-      <h2 class="section-title">② EMIS緊急時入力補助</h2>
-      <div class="grid">
-        <div><label>EMIS入力状況</label><select id="emisStatus"><option value="">選択してください</option><option>入力済み</option><option>未入力</option><option>EMIS対象外</option><option>不明</option></select></div>
-        <div><label>建物・施設被害</label><select id="building"><option value="">選択してください</option><option>なし</option><option>軽微</option><option>一部使用不能</option><option>大きな被害</option><option>使用不能</option><option>確認中</option></select></div>
-        <div><label>電気</label><select id="power"><option value="">選択</option><option>通常</option><option>停電・非常電源使用</option><option>使用不能</option><option>不明</option></select></div>
-        <div><label>水道</label><select id="water"><option value="">選択</option><option>通常</option><option>制限あり</option><option>断水</option><option>不明</option></select></div>
-        <div><label>医療ガス</label><select id="gas"><option value="">選択</option><option>通常</option><option>不足・制限あり</option><option>使用不能</option><option>該当なし</option><option>不明</option></select></div>
-        <div><label>通信</label><select id="comms"><option value="">選択</option><option>通常</option><option>一部不通</option><option>不通</option><option>不明</option></select></div>
-        <div><label>現在の診療可否</label><select id="careEmergency"><option value="">選択</option><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option></select></div>
-        <div><label>救急患者受入</label><select id="emergencyAccept"><option value="">選択</option><option>可能</option><option>一部可能</option><option>不可</option><option>該当なし</option></select></div>
-        <div><label>入院患者への影響</label><select id="inpatientImpact"><option value="">選択</option><option>なし</option><option>あり</option><option>入院機能なし</option><option>確認中</option></select></div>
-        <div><label>転院必要患者</label><select id="transferNeed"><option value="">選択</option><option>なし</option><option>あり</option><option>確認中</option></select></div>
-        <div><label>人員不足</label><select id="staffShort"><option value="">選択</option><option>なし</option><option>あり</option><option>確認中</option></select></div>
-        <div><label>医薬品・資機材不足</label><select id="supplyShort"><option value="">選択</option><option>なし</option><option>あり</option><option>確認中</option></select></div>
-      </div>
-      <div style="margin-top:14px"><label>緊急支援要請・特記事項</label><textarea id="emergencyNote" placeholder="患者搬送、人員、水、燃料、医薬品等"></textarea></div>
-    </div>
-  </section>
-
-  <section id="detail" class="form-panel">
-    <div class="card">
-      <h2 class="section-title">③ 詳細入力：建物・ライフライン</h2>
-      <div class="grid3">
-        <div><label>倒壊・損壊</label><select id="detailDamage"><option value="">選択</option><option>なし</option><option>軽微</option><option>一部使用不能</option><option>重大</option></select></div>
-        <div><label>浸水</label><select id="flood"><option value="">選択</option><option>なし</option><option>あり</option><option>確認中</option></select></div>
-        <div><label>火災</label><select id="fire"><option value="">選択</option><option>なし</option><option>あり</option><option>鎮火済み</option></select></div>
-        <div><label>商用電源</label><select id="gridPower"><option value="">選択</option><option>使用可能</option><option>停電</option><option>不安定</option></select></div>
-        <div><label>非常用発電機</label><select id="generator"><option value="">選択</option><option>稼働中</option><option>稼働可能</option><option>使用不能</option><option>なし</option></select></div>
-        <div><label>燃料残量（概算時間）</label><input id="fuelHours" type="number" min="0" placeholder="例：12"></div>
-        <div><label>上水</label><select id="detailWater"><option value="">選択</option><option>通常</option><option>制限</option><option>断水</option></select></div>
-        <div><label>受水槽</label><select id="tank"><option value="">選択</option><option>使用可</option><option>残量少</option><option>使用不可</option><option>なし</option></select></div>
-        <div><label>インターネット</label><select id="internet"><option value="">選択</option><option>使用可</option><option>不安定</option><option>使用不可</option></select></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">③ 詳細入力：診療機能</h2>
-      <div class="grid3">
-        <div><label>外来</label><select id="outpatient"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>救急</label><select id="er"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>入院</label><select id="ward"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>手術</label><select id="surgery"><option value="">選択</option><option>可能</option><option>緊急のみ</option><option>不可</option><option>なし</option></select></div>
-        <div><label>ICU/HCU</label><select id="icu"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>人工透析</label><select id="dialysis"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>分娩</label><select id="delivery"><option value="">選択</option><option>可能</option><option>制限</option><option>不可</option><option>なし</option></select></div>
-        <div><label>在宅医療</label><select id="homecare"><option value="">選択</option><option>実施可能</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-        <div><label>処方・薬剤提供</label><select id="pharmacy"><option value="">選択</option><option>通常</option><option>制限</option><option>停止</option><option>なし</option></select></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2 class="section-title">③ 詳細入力：患者・人員・支援</h2>
-      <div class="grid3">
-        <div><label>現在の入院患者数</label><input id="inpatients" type="number" min="0"></div>
-        <div><label>転院必要患者数</label><input id="transferCount" type="number" min="0"></div>
-        <div><label>新規患者受入</label><select id="newAccept"><option value="">選択</option><option>可能</option><option>制限あり</option><option>不可</option></select></div>
-        <div><label>重症患者受入</label><select id="criticalAccept"><option value="">選択</option><option>可能</option><option>制限あり</option><option>不可</option><option>該当なし</option></select></div>
-        <div><label>医師不足</label><select id="doctorShort"><option value="">選択</option><option>なし</option><option>あり</option></select></div>
-        <div><label>看護師不足</label><select id="nurseShort"><option value="">選択</option><option>なし</option><option>あり</option></select></div>
-      </div>
-      <div style="margin-top:14px"><label>不足物資（複数選択）</label><div class="choices" id="suppliesChoices"><label><input type="checkbox" value="医薬品">医薬品</label><label><input type="checkbox" value="酸素">酸素</label><label><input type="checkbox" value="水">水</label><label><input type="checkbox" value="食料">食料</label><label><input type="checkbox" value="燃料">燃料</label><label><input type="checkbox" value="衛生材料">衛生材料</label><label><input type="checkbox" value="PPE">PPE</label><label><input type="checkbox" value="通信機器">通信機器</label></div></div>
-      <div style="margin-top:14px"><label>支援要請・特記事項</label><textarea id="detailNote" placeholder="必要な人員、物資、搬送、その他具体的に記載"></textarea></div>
-    </div>
-  </section>
-
-  <div class="actions">
-    <button class="action save" id="saveBtn">端末に保存</button>
-    <button class="action csv" id="csvBtn">CSV出力</button>
-    <button class="action print" id="printBtn">印刷 / PDF保存</button>
-    <button class="action clear" id="clearBtn">入力をクリア</button>
-  </div>
-  <div id="status" class="status"></div>
+<header><h1>福島県 福祉施設 災害時情報共有システム</h1><p>高齢者・障害者・児童福祉施設等の被災状況／支援ニーズ共有</p></header>
+<main>
+<section id="home">
+<div class="card"><b>災害時は、まず第1報を入力してください。</b><div class="small">その後、状況変化に応じて詳細情報・支援要請を更新します。</div></div>
+<div class="grid home" style="margin-top:14px">
+<div class="card action" onclick="showForm('first')"><div class="icon">🆘</div><span class="badge r">第1報</span><h2>① 安否・被災状況</h2><p>人的被害、建物、ライフライン、避難状況を迅速報告</p></div>
+<div class="card action" onclick="showForm('detail')"><div class="icon">🏠</div><span class="badge y">詳細</span><h2>② 施設詳細情報</h2><p>利用者・職員、電気・水・食料、医療介護継続状況を入力</p></div>
+<div class="card action" onclick="showForm('support')"><div class="icon">🚚</div><span class="badge b">支援要請</span><h2>③ 支援ニーズ</h2><p>物資、人員、搬送、避難先、医療支援などを要請</p></div>
+<div class="card action" onclick="openAdmin()"><div class="icon">📊</div><h2>管理者一覧</h2><p>施設別最新報・支援ニーズ・CSV出力</p></div>
 </div>
-<footer>Prototype for Fukushima Prefecture Medical Association disaster information collection</footer>
-<button class="admin-open" id="adminOpen">🔒 管理者</button>
-<div class="admin-overlay" id="adminOverlay">
-  <div class="admin-box">
-    <div id="adminLoginView" class="admin-loginbox">
-      <div class="admin-head"><h2 style="margin:0">管理者ログイン</h2><button class="action clear" id="adminClose1">閉じる</button></div>
-      <p class="admin-note2" id="adminSetupNote"></p>
-      <div class="admin-row">
-        <div><label>管理者ID</label><input id="adminId2" type="text" autocomplete="username"></div>
-        <div><label>パスワード</label><input id="adminPw2" type="password" autocomplete="current-password"></div>
-      </div>
-      <div style="margin-top:14px"><button class="action save" id="adminLogin2">ログイン / 初回設定</button></div>
-      <div class="status" id="adminLoginStatus2"></div>
-    </div>
-    <div id="adminDashView" style="display:none">
-      <div class="admin-head"><div><h2 style="margin:0">災害時医療機関 回答一覧</h2><div class="admin-note2">同一医療機関は「医療機関名＋市町村」で統合し、最新回答を1行に表示します。</div></div><div><button class="action clear" id="adminLogout2">ログアウト</button> <button class="action clear" id="adminClose2">閉じる</button></div></div>
-      <div class="admin-tools">
-        <input id="adminSearch2" type="text" placeholder="医療機関名・市町村で検索">
-        <select id="adminCare2"><option value="">診療状況：すべて</option><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option><option>未確認</option></select>
-        <select id="adminSupport2"><option value="">支援要請：すべて</option><option>あり</option><option>なし</option></select>
-        <button class="action csv" id="adminCsv2">一覧CSV出力</button>
-      </div>
-      <div id="adminCounts2" class="admin-note2"></div>
-      <div class="admin-tablewrap"><table class="admin-table"><thead><tr><th>医療機関名</th><th>市町村</th><th>区分</th><th>職員安否</th><th>施設被害</th><th>診療状況</th><th>支援要請</th><th>電気</th><th>水道</th><th>通信</th><th>救急受入</th><th>転院</th><th>人員不足</th><th>物資不足</th><th>電話</th><th>最終更新</th></tr></thead><tbody id="adminBody2"></tbody></table></div>
-    </div>
-  </div>
+</section>
+
+<section id="formPage" class="hidden">
+<div style="display:flex;justify-content:space-between;align-items:center"><h2 id="formTitle"></h2><button class="secondary" onclick="goHome()">← 戻る</button></div>
+<form id="reportForm" class="card">
+<input type="hidden" id="reportType">
+<div class="row">
+<div><label>施設名 *</label><input id="facility" required></div>
+<div><label>施設種別 *</label><select id="facilityType" required>
+<option>特別養護老人ホーム</option><option>介護老人保健施設</option><option>養護老人ホーム</option><option>有料老人ホーム</option><option>認知症グループホーム</option><option>障害者支援施設</option><option>児童福祉施設</option><option>その他</option>
+</select></div></div>
+<div class="row"><div><label>市町村 *</label><input id="municipality" required></div><div><label>報告者 *</label><input id="reporter" required></div></div>
+<div class="row"><div><label>電話番号 *</label><input id="phone" required></div><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div></div>
+
+<div id="firstFields" class="section">
+<h3>第1報</h3>
+<div class="row"><div><label>施設被害</label><select id="damage"><option>被害なし</option><option>軽微な被害</option><option>一部使用不可</option><option>施設継続困難</option><option>確認中</option></select></div>
+<div><label>人的被害</label><select id="casualty"><option>なし</option><option>負傷者あり</option><option>重症者あり</option><option>死亡者あり</option><option>確認中</option></select></div></div>
+<div class="row"><div><label>施設内避難継続</label><select id="stay"><option>可能</option><option>一部困難</option><option>困難・避難必要</option><option>確認中</option></select></div>
+<div><label>外部支援</label><select id="needSupport"><option>現時点で不要</option><option>必要</option><option>緊急に必要</option><option>確認中</option></select></div></div>
 </div>
+
+<div id="detailFields" class="section">
+<h3>施設詳細</h3>
+<div class="row"><div><label>利用者数</label><input id="residents" type="number" min="0"></div><div><label>勤務可能職員数</label><input id="staff" type="number" min="0"></div></div>
+<div class="row"><div><label>電気</label><select id="power"><option>使用可</option><option>停電・非常電源あり</option><option>停電・非常電源なし</option></select></div><div><label>水道</label><select id="water"><option>使用可</option><option>制限あり</option><option>断水</option></select></div></div>
+<div class="row"><div><label>食料</label><select id="food"><option>3日以上</option><option>1〜2日</option><option>24時間未満</option><option>不足</option></select></div><div><label>医薬品・衛生材料</label><select id="meds"><option>問題なし</option><option>一部不足</option><option>不足</option></select></div></div>
+<div class="row"><div><label>医療的ケア継続</label><select id="medicalCare"><option>可能</option><option>一部困難</option><option>困難</option><option>対象者なし</option></select></div><div><label>通信</label><select id="comms"><option>通常</option><option>携帯のみ</option><option>固定電話のみ</option><option>不通</option></select></div></div>
+</div>
+
+<div id="supportFields" class="section">
+<h3>支援ニーズ</h3>
+<label>必要な支援（複数可・自由記載）</label><textarea id="supportNeed" placeholder="例：飲料水、介護職員2名、発電機、酸素、車椅子利用者3名の搬送、受入先調整"></textarea>
+<div class="row"><div><label>避難・搬送が必要な人数</label><input id="evacCount" type="number" min="0"></div><div><label>緊急度</label><select id="urgency"><option>低</option><option>中</option><option>高</option><option>最優先</option></select></div></div>
+<label>その他・連絡事項</label><textarea id="notes"></textarea>
+</div>
+<button type="submit">この内容で報告する</button>
+<div id="saved" class="status ok hidden">保存しました。この端末の管理一覧に反映されました。</div>
+</form>
+</section>
+
+<section id="adminPage" class="hidden">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>管理者一覧</h2><div><button onclick="downloadCSV()">CSV出力</button> <button class="secondary" onclick="goHome()">← 戻る</button></div></div>
+<div class="card"><div id="summary"></div><div class="tablewrap"><table><thead><tr><th>報告時刻</th><th>施設</th><th>種別</th><th>市町村</th><th>報告区分</th><th>被害</th><th>支援</th><th>連絡先</th></tr></thead><tbody id="reportRows"></tbody></table></div></div>
+</section>
+<div class="small" style="text-align:center;padding:25px">※ 現在の試作版はブラウザ内保存です。県全体でリアルタイム共有するにはサーバー側データベースと認証を接続します。</div>
+</main>
 <script>
-const tabs=[...document.querySelectorAll('.tab')];
-const panels=[...document.querySelectorAll('.form-panel')];
-tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));panels.forEach(p=>p.classList.remove('active'));t.classList.add('active');document.getElementById(t.dataset.tab).classList.add('active');localStorage.setItem('fma_active_tab',t.dataset.tab)}));
-function nowLocal(){const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
-if(!document.getElementById('reportedAt').value) document.getElementById('reportedAt').value=nowLocal();
-const fields=[...document.querySelectorAll('input,select,textarea')].filter(e=>!['radio','checkbox'].includes(e.type));
-function getData(){const d={};fields.forEach(e=>d[e.id]=e.value);document.querySelectorAll('input[type=radio]:checked').forEach(e=>d[e.name]=e.value);d.supplies=[...document.querySelectorAll('#suppliesChoices input:checked')].map(x=>x.value);d.savedAt=new Date().toISOString();return d}
-function setData(d){if(!d)return;fields.forEach(e=>{if(d[e.id]!==undefined)e.value=d[e.id]});document.querySelectorAll('input[type=radio]').forEach(e=>{e.checked=d[e.name]===e.value});document.querySelectorAll('#suppliesChoices input').forEach(e=>{e.checked=(d.supplies||[]).includes(e.value)})}
-function save(){localStorage.setItem('fma_disaster_form',JSON.stringify(getData()));document.getElementById('status').textContent='保存しました：'+new Date().toLocaleString('ja-JP')}
-function esc(v){return '"'+String(v??'').replaceAll('"','""')+'"'}
-function downloadCSV(){const d=getData();const labels={facility:'医療機関名',municipality:'所在地',facilityType:'医療機関区分',responder:'回答者',phone:'電話',reportedAt:'回答日時',staffSafety:'職員安否',facilityDamage:'医療機関被害',careStatus:'診療状況',supportNeeded:'支援要請',safetyNote:'安否確認備考',emisStatus:'EMIS入力状況',building:'建物施設被害',power:'電気',water:'水道',gas:'医療ガス',comms:'通信',careEmergency:'診療可否',emergencyAccept:'救急患者受入',inpatientImpact:'入院患者影響',transferNeed:'転院必要患者',staffShort:'人員不足',supplyShort:'資機材不足',emergencyNote:'緊急支援要請',detailDamage:'倒壊損壊',flood:'浸水',fire:'火災',gridPower:'商用電源',generator:'非常用発電機',fuelHours:'燃料残量時間',detailWater:'上水',tank:'受水槽',internet:'インターネット',outpatient:'外来',er:'救急',ward:'入院',surgery:'手術',icu:'ICU/HCU',dialysis:'人工透析',delivery:'分娩',homecare:'在宅医療',pharmacy:'処方薬剤提供',inpatients:'入院患者数',transferCount:'転院必要患者数',newAccept:'新規患者受入',criticalAccept:'重症患者受入',doctorShort:'医師不足',nurseShort:'看護師不足',supplies:'不足物資',detailNote:'詳細支援要請'};
-  const keys=Object.keys(labels); const row=keys.map(k=>esc(Array.isArray(d[k])?d[k].join(' / '):d[k])).join(','); const csv='\ufeff'+keys.map(k=>esc(labels[k])).join(',')+'\n'+row+'\n'; const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`災害医療情報_${d.facility||'未記入'}_${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(a.href)
+const $=id=>document.getElementById(id);
+function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
+function goHome(){['formPage','adminPage'].forEach(x=>$(x).classList.add('hidden'));$('home').classList.remove('hidden')}
+function showForm(type){
+ $('home').classList.add('hidden');$('formPage').classList.remove('hidden');$('adminPage').classList.add('hidden');
+ $('reportType').value=type;$('reportedAt').value=nowLocal();
+ const titles={first:'① 安否・被災状況（第1報）',detail:'② 施設詳細情報',support:'③ 支援ニーズ'};$('formTitle').textContent=titles[type];
+ $('firstFields').classList.toggle('hidden',type!=='first');$('detailFields').classList.toggle('hidden',type!=='detail');$('supportFields').classList.toggle('hidden',type!=='support');
 }
-document.getElementById('saveBtn').onclick=registerRecord;document.getElementById('csvBtn').onclick=downloadCSV;document.getElementById('printBtn').onclick=()=>window.print();document.getElementById('clearBtn').onclick=()=>{if(confirm('入力内容をすべてクリアしますか？')){localStorage.removeItem('fma_disaster_form');location.reload()}};
-setData(JSON.parse(localStorage.getItem('fma_disaster_form')||'null'));
-const active=localStorage.getItem('fma_active_tab');if(active){document.querySelector(`.tab[data-tab="${active}"]`)?.click()}
-let timer;document.addEventListener('input',()=>{clearTimeout(timer);timer=setTimeout(save,800)});
-
-/* FMA_ADMIN_V2 */
-function fmaKey(d){return (String(d.municipality||'').trim()+'__'+String(d.facility||'').trim()).toLowerCase().replace(/[\s　]+/g,'')}
-function registerRecord(){
-  const d=getData();
-  if(!String(d.facility||'').trim()||!String(d.municipality||'').trim()){alert('医療機関名と所在地（市町村）は必須です。');return}
-  const all=JSON.parse(localStorage.getItem('fma_disaster_records')||'{}');
-  d.updatedAt=new Date().toISOString();
-  all[fmaKey(d)]={...(all[fmaKey(d)]||{}),...d};
-  localStorage.setItem('fma_disaster_records',JSON.stringify(all));
-  localStorage.setItem('fma_disaster_form',JSON.stringify(d));
-  document.getElementById('status').textContent='回答を登録しました：'+new Date().toLocaleString('ja-JP');
+function reports(){return JSON.parse(localStorage.getItem('welfareDisasterReports')||'[]')}
+$('reportForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const r={id:Date.now(),type:$('reportType').value,facility:$('facility').value,facilityType:$('facilityType').value,municipality:$('municipality').value,reporter:$('reporter').value,phone:$('phone').value,reportedAt:$('reportedAt').value,
+ damage:$('damage').value,casualty:$('casualty').value,stay:$('stay').value,needSupport:$('needSupport').value,residents:$('residents').value,staff:$('staff').value,power:$('power').value,water:$('water').value,food:$('food').value,meds:$('meds').value,medicalCare:$('medicalCare').value,comms:$('comms').value,supportNeed:$('supportNeed').value,evacCount:$('evacCount').value,urgency:$('urgency').value,notes:$('notes').value};
+ const a=reports();a.unshift(r);localStorage.setItem('welfareDisasterReports',JSON.stringify(a));$('saved').classList.remove('hidden');
+ setTimeout(()=>$('saved').classList.add('hidden'),3000);
+});
+function openAdmin(){
+ $('home').classList.add('hidden');$('formPage').classList.add('hidden');$('adminPage').classList.remove('hidden');
+ const a=reports();$('summary').innerHTML='<b>報告件数：'+a.length+'件</b>　<span class="small">緊急支援要請：'+a.filter(x=>x.needSupport==='緊急に必要'||x.urgency==='最優先').length+'件</span>';
+ $('reportRows').innerHTML=a.map(r=>'<tr><td>'+esc(r.reportedAt)+'</td><td><b>'+esc(r.facility)+'</b></td><td>'+esc(r.facilityType)+'</td><td>'+esc(r.municipality)+'</td><td>'+({first:'第1報',detail:'詳細',support:'支援要請'}[r.type]||'')+'</td><td>'+esc(r.damage||'')+'</td><td>'+esc(r.supportNeed||r.needSupport||'')+'</td><td>'+esc(r.phone)+'</td></tr>').join('');
 }
-async function fmaHash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function fmaAdminConf(){return JSON.parse(localStorage.getItem('fma_admin_conf')||'null')}
-function fmaAdminLogged(){return sessionStorage.getItem('fma_admin_ok')==='1'}
-function fmaShowAdmin(){
-  const ok=fmaAdminLogged();document.getElementById('adminLoginView').style.display=ok?'none':'block';document.getElementById('adminDashView').style.display=ok?'block':'none';
-  document.getElementById('adminSetupNote').textContent=fmaAdminConf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。パスワードはハッシュ化して保存します。';
-  if(ok)fmaRender();
-}
-document.getElementById('adminOpen').onclick=()=>{document.getElementById('adminOverlay').classList.add('show');fmaShowAdmin()}
-document.getElementById('adminClose1').onclick=document.getElementById('adminClose2').onclick=()=>document.getElementById('adminOverlay').classList.remove('show')
-document.getElementById('adminLogin2').onclick=async()=>{
-  const id=document.getElementById('adminId2').value.trim(),pw=document.getElementById('adminPw2').value;if(!id||!pw){document.getElementById('adminLoginStatus2').textContent='IDとパスワードを入力してください。';return}
-  const h=await fmaHash(pw),conf=fmaAdminConf();
-  if(!conf){localStorage.setItem('fma_admin_conf',JSON.stringify({id,hash:h}));sessionStorage.setItem('fma_admin_ok','1');fmaShowAdmin();return}
-  if(id===conf.id&&h===conf.hash){sessionStorage.setItem('fma_admin_ok','1');document.getElementById('adminPw2').value='';document.getElementById('adminLoginStatus2').textContent='';fmaShowAdmin()}else document.getElementById('adminLoginStatus2').textContent='IDまたはパスワードが違います。'
-}
-document.getElementById('adminLogout2').onclick=()=>{sessionStorage.removeItem('fma_admin_ok');fmaShowAdmin()}
-function fmaEsc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function fmaRows(){
-  const q=String(document.getElementById('adminSearch2').value||'').toLowerCase(),care=document.getElementById('adminCare2').value,sup=document.getElementById('adminSupport2').value;
-  return Object.values(JSON.parse(localStorage.getItem('fma_disaster_records')||'{}')).filter(r=>(!q||(String(r.facility||'')+String(r.municipality||'')).toLowerCase().includes(q))&&(!care||r.careStatus===care)&&(!sup||r.supportNeeded===sup)).sort((a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')))
-}
-function fmaCls(v){return ['診療不能','あり','断水','不通','使用不能','不可'].includes(v)?'admin-bad':['一部診療可能','確認中','制限あり','一部可能','一部不通'].includes(v)?'admin-warn':''}
-function fmaRender(){
-  const all=Object.values(JSON.parse(localStorage.getItem('fma_disaster_records')||'{}')),rows=fmaRows();
-  document.getElementById('adminCounts2').textContent='登録 '+all.length+'施設 ／ 支援要請あり '+all.filter(x=>x.supportNeeded==='あり').length+' ／ 診療不能 '+all.filter(x=>x.careStatus==='診療不能').length;
-  document.getElementById('adminBody2').innerHTML=rows.map(r=>'<tr>'+[
-    r.facility,r.municipality,r.facilityType,r.staffSafety,r.facilityDamage,r.careStatus,r.supportNeeded,r.power,r.water,r.comms,r.emergencyAccept,r.transferNeed,r.staffShort,r.supplyShort,r.phone,r.updatedAt?new Date(r.updatedAt).toLocaleString('ja-JP'):''
-  ].map(v=>'<td class="'+fmaCls(v)+'">'+fmaEsc(v)+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="16">回答はありません。</td></tr>'
-}
-['adminSearch2','adminCare2','adminSupport2'].forEach(id=>document.getElementById(id).addEventListener('input',fmaRender))
-document.getElementById('adminCsv2').onclick=()=>{
-  const rows=fmaRows(),keys=['facility','municipality','facilityType','responder','phone','reportedAt','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','emisStatus','building','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote','updatedAt'];
-  const labels=['医療機関名','市町村','区分','回答者','電話','回答日時','職員安否','医療機関被害','診療状況','支援要請','安否確認備考','EMIS入力状況','建物施設被害','電気','水道','医療ガス','通信','診療可否','救急患者受入','入院患者影響','転院必要患者','人員不足','資機材不足','緊急支援要請','倒壊損壊','浸水','火災','商用電源','非常用発電機','燃料残量時間','上水','受水槽','インターネット','外来','救急','入院','手術','ICU/HCU','人工透析','分娩','在宅医療','処方薬剤提供','入院患者数','転院必要患者数','新規患者受入','重症患者受入','医師不足','看護師不足','不足物資','詳細支援要請','最終更新'];
-  const e=v=>'"'+String(Array.isArray(v)?v.join(' / '):(v??'')).replaceAll('"','""')+'"';
-  const csv='\ufeff'+labels.map(e).join(',')+'\n'+rows.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='福島県医師会_災害医療情報一覧_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href)
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function downloadCSV(){
+ const a=reports(),keys=['reportedAt','facility','facilityType','municipality','type','reporter','phone','damage','casualty','stay','needSupport','residents','staff','power','water','food','meds','medicalCare','comms','supportNeed','evacCount','urgency','notes'];
+ const csv=[keys.join(','),...a.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(','))].join('\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='welfare_disaster_reports.csv';x.click();URL.revokeObjectURL(url);
 }
 </script>
-</body>
-</html>
+</body></html>
