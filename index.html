@@ -28,7 +28,6 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 <div class="card action" onclick="showForm('first')"><div class="icon">🆘</div><span class="badge r">第1報</span><h2>① 安否・被災状況</h2><p>人的被害、建物、ライフライン、避難状況を迅速報告</p></div>
 <div class="card action" onclick="showForm('detail')"><div class="icon">🏠</div><span class="badge y">詳細</span><h2>② 施設詳細情報</h2><p>利用者・職員、電気・水・食料、医療介護継続状況を入力</p></div>
 <div class="card action" onclick="showForm('support')"><div class="icon">🚚</div><span class="badge b">支援要請</span><h2>③ 支援ニーズ</h2><p>物資、人員、搬送、避難先、医療支援などを要請</p></div>
-<div class="card action" onclick="openAdmin()"><div class="icon">📊</div><h2>管理者一覧</h2><p>施設別最新報・支援ニーズ・CSV出力</p></div>
 </div>
 </section>
 
@@ -71,18 +70,14 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 </form>
 </section>
 
-<section id="adminPage" class="hidden">
-<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h2>管理者一覧</h2><div><button onclick="downloadCSV()">CSV出力</button> <button class="secondary" onclick="goHome()">← 戻る</button></div></div>
-<div class="card"><div id="summary"></div><div class="tablewrap"><table><thead><tr><th>報告時刻</th><th>施設</th><th>種別</th><th>市町村</th><th>報告区分</th><th>被害</th><th>支援</th><th>連絡先</th></tr></thead><tbody id="reportRows"></tbody></table></div></div>
-</section>
 <div class="small" style="text-align:center;padding:25px">※ 現在の試作版はブラウザ内保存です。県全体でリアルタイム共有するにはサーバー側データベースと認証を接続します。</div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
-function goHome(){['formPage','adminPage'].forEach(x=>$(x).classList.add('hidden'));$('home').classList.remove('hidden')}
+function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
- $('home').classList.add('hidden');$('formPage').classList.remove('hidden');$('adminPage').classList.add('hidden');
+ $('home').classList.add('hidden');$('formPage').classList.remove('hidden');
  $('reportType').value=type;$('reportedAt').value=nowLocal();
  const titles={first:'① 安否・被災状況（第1報）',detail:'② 施設詳細情報',support:'③ 支援ニーズ'};$('formTitle').textContent=titles[type];
  $('firstFields').classList.toggle('hidden',type!=='first');$('detailFields').classList.toggle('hidden',type!=='detail');$('supportFields').classList.toggle('hidden',type!=='support');
@@ -95,16 +90,6 @@ $('reportForm').addEventListener('submit',e=>{
  const a=reports();a.unshift(r);localStorage.setItem('welfareDisasterReports',JSON.stringify(a));$('saved').classList.remove('hidden');
  setTimeout(()=>$('saved').classList.add('hidden'),3000);
 });
-function openAdmin(){
- $('home').classList.add('hidden');$('formPage').classList.add('hidden');$('adminPage').classList.remove('hidden');
- const a=reports();$('summary').innerHTML='<b>報告件数：'+a.length+'件</b>　<span class="small">緊急支援要請：'+a.filter(x=>x.needSupport==='緊急に必要'||x.urgency==='最優先').length+'件</span>';
- $('reportRows').innerHTML=a.map(r=>'<tr><td>'+esc(r.reportedAt)+'</td><td><b>'+esc(r.facility)+'</b></td><td>'+esc(r.facilityType)+'</td><td>'+esc(r.municipality)+'</td><td>'+({first:'第1報',detail:'詳細',support:'支援要請'}[r.type]||'')+'</td><td>'+esc(r.damage||'')+'</td><td>'+esc(r.supportNeed||r.needSupport||'')+'</td><td>'+esc(r.phone)+'</td></tr>').join('');
-}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function downloadCSV(){
- const a=reports(),keys=['reportedAt','facility','facilityType','municipality','type','reporter','phone','damage','casualty','stay','needSupport','residents','staff','power','water','food','meds','medicalCare','comms','supportNeed','evacCount','urgency','notes'];
- const csv=[keys.join(','),...a.map(r=>keys.map(k=>'"'+String(r[k]??'').replaceAll('"','""')+'"').join(','))].join('\n');
- const blob=new Blob(['\ufeff'+csv],{type:'text/csv'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='welfare_disaster_reports.csv';x.click();URL.revokeObjectURL(url);
-}
 </script>
 </body></html>
