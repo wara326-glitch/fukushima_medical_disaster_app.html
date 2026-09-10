@@ -22,7 +22,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <div class="card"><b>発災時は、まず「① 災害時の安否確認」を入力してください。</b><div class="small">病院・有床診療所・無床診療所・歯科診療所等の会員医療機関を想定しています。</div></div>
 <div class="grid home" style="margin-top:14px">
 <div class="card action" onclick="showForm('safety')"><div class="icon">✅</div><span class="badge b">第1報</span><h2>① 災害時の安否確認</h2><p>職員・施設の安否、診療継続可否、支援要否を迅速報告</p></div>
-<div class="card action" onclick="showForm('emergency')"><div class="icon">🚨</div><span class="badge r">EMIS</span><h2>② EMIS 緊急時入力</h2><p>建物、ライフライン、診療・救急受入、支援要請を入力</p></div>
+<div class="card action" onclick="showForm('emergency')"><div class="icon">🚨</div><span class="badge r">緊急</span><h2>② 緊急時入力</h2><p>建物、ライフライン、診療・救急受入、支援要請を入力</p></div>
 <div class="card action" onclick="showForm('detail')"><div class="icon">🏥</div><span class="badge y">詳細</span><h2>③ 詳細入力</h2><p>被災状況、ライフライン・サプライ、診療機能、患者搬送を詳細入力</p></div>
 </div>
 <div class="note" style="margin-top:14px">本アプリは福島県医師会内の情報共有用です。EMIS対象医療機関は、本アプリへの回答とは別に正式なEMIS入力も行ってください。</div>
@@ -45,7 +45,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 </div>
 
 <div id="emergencyFields" class="section">
-<h3>② EMIS 緊急時入力に準じた項目</h3>
+<h3>② 緊急時入力</h3>
 <div class="row"><div><label>建物・施設被害</label><select id="building"><option>被害なし</option><option>一部被害</option><option>重大な被害</option><option>使用不能</option><option>確認中</option></select></div><div><label>建物の危険状況</label><select id="buildingRisk"><option>危険なし</option><option>一部立入制限</option><option>危険あり</option><option>評価中</option></select></div></div>
 <div class="row"><div><label>電気</label><select id="power"><option>使用可</option><option>非常電源のみ</option><option>停電</option><option>確認中</option></select></div><div><label>水道</label><select id="water"><option>使用可</option><option>制限あり</option><option>断水</option><option>確認中</option></select></div></div>
 <div class="row"><div><label>医療ガス</label><select id="gas"><option>使用可</option><option>残量不安</option><option>使用不能</option><option>対象外・不明</option></select></div><div><label>通信</label><select id="comms"><option>通常</option><option>一部不通</option><option>携帯のみ</option><option>不通</option><option>確認中</option></select></div></div>
@@ -90,7 +90,7 @@ function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOf
 function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
  $('home').classList.add('hidden');$('formPage').classList.remove('hidden');$('reportType').value=type;$('reportedAt').value=nowLocal();
- const titles={safety:'① 災害時の安否確認',emergency:'② EMIS 緊急時入力',detail:'③ 詳細入力'};$('formTitle').textContent=titles[type];
+ const titles={safety:'① 災害時の安否確認',emergency:'② 緊急時入力',detail:'③ 詳細入力'};$('formTitle').textContent=titles[type];
  $('safetyFields').classList.toggle('hidden',type!=='safety');$('emergencyFields').classList.toggle('hidden',type!=='emergency');$('detailFields').classList.toggle('hidden',type!=='detail');
 }
 function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
