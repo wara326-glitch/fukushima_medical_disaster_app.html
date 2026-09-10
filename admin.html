@@ -76,14 +76,20 @@ function render(){
    $('tableHead').innerHTML='<th>操作</th>'+cols.map(([,label])=>'<th>'+esc(label)+'</th>').join('');
    $('rows').innerHTML=a.map(r=>'<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td>'+cols.map(([k])=>'<td>'+esc(valueText(r[k]))+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="'+(cols.length+1)+'">該当する回答はありません。</td></tr>';
  }else{
-   $('tableTitle').textContent='①・②・③ 回答一覧（各回答は、そのフォームで入力した項目のみ表示）';
-   $('tableHead').innerHTML='<th>操作</th><th>報告区分</th>'+commonCols.map(([,label])=>'<th>'+esc(label)+'</th>').join('')+'<th>回答内容</th>';
+   $('tableTitle').textContent='①・②・③ 回答一覧（回答内容は項目ごとに横並び表示）';
+   const allTypeCols=[
+     ...typeCols.safety.map(x=>['safety',...x]),
+     ...typeCols.emergency.map(x=>['emergency',...x]),
+     ...typeCols.detail.map(x=>['detail',...x])
+   ];
+   $('tableHead').innerHTML='<th>操作</th><th>報告区分</th>'+commonCols.map(([,label])=>'<th>'+esc(label)+'</th>').join('')+
+     allTypeCols.map(([t,k,label])=>'<th>'+esc(typeLabel[t]+'｜'+label)+'</th>').join('');
    $('rows').innerHTML=a.map(r=>{
-     const detail=(typeCols[r.type]||[]).map(([k,label])=>{
-       const v=valueText(r[k]); return v!==''?'<b>'+esc(label)+'</b>：'+esc(v):'';
-     }).filter(Boolean).join('<br>');
-     return '<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td><td>'+esc(typeLabel[r.type]||r.type)+'</td>'+commonCols.map(([k])=>'<td>'+esc(valueText(r[k]))+'</td>').join('')+'<td style="white-space:normal;min-width:360px">'+detail+'</td></tr>';
-   }).join('')||'<tr><td colspan="'+(commonCols.length+3)+'">該当する回答はありません。</td></tr>';
+     return '<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td><td>'+esc(typeLabel[r.type]||r.type)+'</td>'+
+       commonCols.map(([k])=>'<td>'+esc(valueText(r[k]))+'</td>').join('')+
+       allTypeCols.map(([t,k])=>'<td>'+(r.type===t?esc(valueText(r[k])):'')+'</td>').join('')+
+       '</tr>';
+   }).join('')||'<tr><td colspan="'+(commonCols.length+allTypeCols.length+2)+'">該当する回答はありません。</td></tr>';
  }
 }
 ['search','typeFilter','supportFilter'].forEach(id=>$(id).addEventListener('input',render));
