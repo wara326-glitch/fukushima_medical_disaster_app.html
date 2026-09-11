@@ -127,6 +127,36 @@ create trigger trg_admin_profiles_updated_at
 before update on public.admin_profiles
 for each row execute function public.touch_updated_at();
 
+-- Record administrator changes inside PostgreSQL so browser clients cannot
+-- suppress or forge the audit trail.
+create or replace function public.audit_medical_report_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.audit_logs(actor, action, report_id, details)
+  values (
+    auth.uid(),
+    lower(TG_OP),
+    coalesce(new.id, old.id),
+    jsonb_build_object(
+      'report_type', coalesce(new.report_type, old.report_type),
+      'facility', coalesce(new.facility, old.facility)
+    )
+  );
+  return coalesce(new, old);
+end;
+$$;
+
+revoke all on function public.audit_medical_report_change() from public, anon, authenticated;
+
+drop trigger if exists trg_medical_reports_audit on public.medical_reports;
+create trigger trg_medical_reports_audit
+after update or delete on public.medical_reports
+for each row execute function public.audit_medical_report_change();
+
 -- IMPORTANT production rules:
 -- 1. Never expose the service_role key in GitHub Pages.
 -- 2. Require MFA for administrator accounts.

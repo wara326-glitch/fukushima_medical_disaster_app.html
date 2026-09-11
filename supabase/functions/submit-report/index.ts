@@ -45,7 +45,12 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown>
   try {
-    body = await req.json()
+    const rawBody = await req.text()
+    if (new TextEncoder().encode(rawBody).byteLength > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: 'payload_too_large' }), { status: 413, headers })
+    }
+    body = JSON.parse(rawBody)
+    if (!body || Array.isArray(body) || typeof body !== 'object') throw new Error('invalid body')
   } catch {
     return new Response(JSON.stringify({ error: 'invalid_json' }), { status: 400, headers })
   }
@@ -60,6 +65,9 @@ Deno.serve(async (req) => {
 
   if (!VALID_TYPES.has(reportType) || !facility || !facilityType || !municipality || !reporter || !phone) {
     return new Response(JSON.stringify({ error: 'validation_failed' }), { status: 400, headers })
+  }
+  if (reportedAt && Number.isNaN(Date.parse(reportedAt))) {
+    return new Response(JSON.stringify({ error: 'invalid_reported_at' }), { status: 400, headers })
   }
 
   // Reject fields that look like patient-identifying data if future clients accidentally send them.

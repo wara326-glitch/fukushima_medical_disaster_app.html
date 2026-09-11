@@ -16,10 +16,12 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
 <header><h1>福島県医師会 災害時医療情報 管理者ページ</h1><p>医療機関別一覧・検索・絞り込み・CSV出力</p></header>
 <main>
 <section id="loginView" class="card login">
-<h2>管理者ログイン</h2><p class="small" id="setupText"></p>
-<label>管理者ID</label><input id="adminId" class="grow" autocomplete="username">
+<h2>管理者ログイン</h2><p class="small" id="setupText">Supabase Authに登録された管理者アカウントでログインしてください。</p>
+<label>メールアドレス</label><input id="adminId" class="grow" type="email" autocomplete="username">
 <label style="display:block;margin-top:10px">パスワード</label><input id="adminPw" class="grow" type="password" autocomplete="current-password">
-<div style="margin-top:14px"><button id="loginBtn">ログイン / 初回設定</button></div><div id="loginStatus" class="status bad"></div>
+<div style="margin-top:14px"><button id="loginBtn">ログイン</button></div>
+<div id="mfaView" class="hidden"><label style="display:block;margin-top:14px">認証アプリの6桁コード</label><input id="mfaCode" class="grow" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><div style="margin-top:14px"><button id="mfaBtn">確認する</button></div></div>
+<div id="loginStatus" class="status bad" role="status" aria-live="polite"></div>
 </section>
 <section id="dashView" class="hidden">
 <div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">回答一覧</h2><div class="small">①安否確認／②緊急時入力／③詳細入力を一覧表示します。</div></div><div><button id="csvBtn">CSV出力</button> <button id="logoutBtn" class="secondary">ログアウト</button></div></div>
@@ -30,7 +32,7 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
 <div id="editModal" class="modal hidden">
   <div class="modalbox">
     <div class="row" style="justify-content:space-between">
-      <div><h2 style="margin:0">回答データ編集</h2><div class="small">保存すると、この端末内の回答データが更新されます。</div></div>
+      <div><h2 style="margin:0">回答データ編集</h2><div class="small">保存すると、災害医療データベースの回答が更新されます。</div></div>
       <button id="editClose" class="secondary">閉じる</button>
     </div>
     <div class="edittabs">
@@ -48,13 +50,47 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
   </div>
 </div>
 </main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app-config.js"></script>
 <script>
-const $=id=>document.getElementById(id);function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
-async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function conf(){return JSON.parse(localStorage.getItem('fmaAdminConf')||'null')}function logged(){return sessionStorage.getItem('fmaAdminLogged')==='1'}
-function refreshAuth(){const ok=logged();$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok);$('setupText').textContent=conf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。';if(ok)render()}
-$('loginBtn').onclick=async()=>{const id=$('adminId').value.trim(),pw=$('adminPw').value;if(!id||!pw){$('loginStatus').textContent='IDとパスワードを入力してください。';return}const h=await hash(pw),c=conf();if(!c){localStorage.setItem('fmaAdminConf',JSON.stringify({id,hash:h}));sessionStorage.setItem('fmaAdminLogged','1');$('loginStatus').textContent='';refreshAuth();return}if(c.id===id&&c.hash===h){sessionStorage.setItem('fmaAdminLogged','1');$('adminPw').value='';$('loginStatus').textContent='';refreshAuth()}else $('loginStatus').textContent='IDまたはパスワードが違います。'}
-$('logoutBtn').onclick=()=>{sessionStorage.removeItem('fmaAdminLogged');refreshAuth()}
+const $=id=>document.getElementById(id);
+const config=window.FMA_APP_CONFIG||{};
+const db=config.supabaseUrl&&config.supabasePublishableKey?supabase.createClient(config.supabaseUrl,config.supabasePublishableKey):null;
+let reportRows=[];let mfaFactor=null;
+function reports(){return reportRows}
+function setLoginStatus(message){$('loginStatus').textContent=message}
+function setAuthView(ok){$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok)}
+function fromDb(row){return {id:row.id,type:row.report_type,facility:row.facility,facilityType:row.facility_type,municipality:row.municipality,reporter:row.reporter,phone:row.phone,reportedAt:row.reported_at||'',createdAt:row.created_at,updatedAt:row.updated_at,...(row.payload||{})}}
+async function loadReports(){
+ if(!db)return;
+ $('summary').textContent='回答を読み込んでいます…';
+ const {data,error}=await db.from('medical_reports').select('*').order('created_at',{ascending:false});
+ if(error){$('summary').textContent='回答を取得できません：'+error.message;return}
+ reportRows=(data||[]).map(fromDb);render();
+}
+async function completeLogin(){
+ const {data:level}=await db.auth.mfa.getAuthenticatorAssuranceLevel();
+ if(level?.nextLevel==='aal2'&&level.currentLevel!=='aal2'){
+   const {data}=await db.auth.mfa.listFactors();mfaFactor=(data?.totp||[]).find(f=>f.status==='verified');
+   if(!mfaFactor){await db.auth.signOut();setLoginStatus('この管理者アカウントには多要素認証が登録されていません。SupabaseでMFAを設定してください。');return}
+   $('mfaView').classList.remove('hidden');setLoginStatus('認証アプリのコードを入力してください。');return;
+ }
+ $('mfaView').classList.add('hidden');setLoginStatus('');setAuthView(true);await loadReports();
+}
+$('loginBtn').onclick=async()=>{
+ if(!db){setLoginStatus('Supabase接続設定が見つかりません。');return}
+ const email=$('adminId').value.trim(),password=$('adminPw').value;if(!email||!password){setLoginStatus('メールアドレスとパスワードを入力してください。');return}
+ setLoginStatus('ログインしています…');const {error}=await db.auth.signInWithPassword({email,password});
+ if(error){setLoginStatus('ログインできません：'+error.message);return}$('adminPw').value='';await completeLogin();
+}
+$('mfaBtn').onclick=async()=>{
+ const code=$('mfaCode').value.trim();if(!mfaFactor||!/^[0-9]{6}$/.test(code)){setLoginStatus('6桁の認証コードを入力してください。');return}
+ const {data:challenge,error:challengeError}=await db.auth.mfa.challenge({factorId:mfaFactor.id});
+ if(challengeError){setLoginStatus('認証を開始できません：'+challengeError.message);return}
+ const {error}=await db.auth.mfa.verify({factorId:mfaFactor.id,challengeId:challenge.id,code});
+ if(error){setLoginStatus('認証コードを確認できません：'+error.message);return}await completeLogin();
+}
+$('logoutBtn').onclick=async()=>{if(db)await db.auth.signOut();reportRows=[];setAuthView(false)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function filtered(){const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;return reports().filter(r=>{const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q);const typeOk=!t||r.type===t;const urgent=r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要';const needed=urgent||r.supportNeeded==='あり'||r.emergencySupport==='要'||String(r.emergencyNote||r.detailNote||'').trim()!=='';return hit&&typeOk&&(!s||(s==='urgent'?urgent:needed))})}
 const commonCols=[
@@ -78,6 +114,7 @@ function cellHtml(r,k){
  }
  return '<td'+(cls?' class="'+cls+'"':'')+'>'+esc(v)+'</td>';
 }
+function actionButtons(id){const q=JSON.stringify(String(id));return '<button class="editbtn" onclick=\'openEdit('+q+')\'>編集</button><button class="deletebtn" onclick=\'deleteReport('+q+')\'>消去</button>'}
 function render(){
  const all=reports(),a=filtered(),selected=$('typeFilter').value;
  $('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+all.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';
@@ -85,7 +122,7 @@ function render(){
    const cols=commonCols.concat(typeCols[selected]||[]);
    $('tableTitle').textContent=typeLabel[selected]+' の回答';
    $('tableHead').innerHTML='<th>操作</th>'+cols.map(([,label])=>'<th>'+esc(label)+'</th>').join('');
-   $('rows').innerHTML=a.map(r=>'<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td>'+cols.map(([k])=>cellHtml(r,k)).join('')+'</tr>').join('')||'<tr><td colspan="'+(cols.length+1)+'">該当する回答はありません。</td></tr>';
+   $('rows').innerHTML=a.map(r=>'<tr><td>'+actionButtons(r.id)+'</td>'+cols.map(([k])=>cellHtml(r,k)).join('')+'</tr>').join('')||'<tr><td colspan="'+(cols.length+1)+'">該当する回答はありません。</td></tr>';
  }else{
    $('tableTitle').textContent='①・②・③ 回答一覧（回答内容は項目ごとに横並び表示）';
    const allTypeCols=[
@@ -96,7 +133,7 @@ function render(){
    $('tableHead').innerHTML='<th>操作</th><th>報告区分</th>'+commonCols.map(([,label])=>'<th>'+esc(label)+'</th>').join('')+
      allTypeCols.map(([t,k,label])=>'<th>'+esc(typeLabel[t]+'｜'+label)+'</th>').join('');
    $('rows').innerHTML=a.map(r=>{
-     return '<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td><td>'+esc(typeLabel[r.type]||r.type)+'</td>'+
+     return '<tr><td>'+actionButtons(r.id)+'</td><td>'+esc(typeLabel[r.type]||r.type)+'</td>'+
        commonCols.map(([k])=>cellHtml(r,k)).join('')+
        allTypeCols.map(([t,k])=>r.type===t?cellHtml(r,k):'<td></td>').join('')+
        '</tr>';
@@ -114,20 +151,19 @@ detail:[['detailDamage','倒壊・損壊'],['flood','浸水'],['fire','火災'],
 const longKeys=new Set(['safetyNote','emergencyNote','supplies','detailNote']);
 let activeEditTab='basic';
 let editingId=null;
+let editingReport=null;
 function renderEditTab(){
- const a=reports(),r=a.find(x=>Number(x.id)===Number(editingId));if(!r)return;
+ const r=editingReport;if(!r)return;
  document.querySelectorAll('.edittab').forEach(b=>b.classList.toggle('active',b.dataset.editTab===activeEditTab));
  $('editFields').innerHTML=editGroups[activeEditTab].map(([k,label])=>'<div class="editfield"><label>'+esc(label)+'</label>'+(longKeys.has(k)?'<textarea data-key="'+k+'">'+esc(r[k]??'')+'</textarea>':'<input data-key="'+k+'" value="'+esc(r[k]??'')+'">')+'</div>').join('');
 }
 function saveVisibleEditFields(){
- if(editingId===null)return;
- const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
- $('editFields').querySelectorAll('[data-key]').forEach(el=>a[i][el.dataset.key]=el.value);
- localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
+ if(!editingReport)return;
+ $('editFields').querySelectorAll('[data-key]').forEach(el=>editingReport[el.dataset.key]=el.value);
 }
 function openEdit(id){
- const r=reports().find(x=>Number(x.id)===Number(id));if(!r)return;
- editingId=Number(id);activeEditTab='basic';$('editStatus').textContent='';
+ const r=reports().find(x=>String(x.id)===String(id));if(!r)return;
+ editingId=String(id);editingReport=structuredClone(r);activeEditTab='basic';$('editStatus').textContent='';
  document.querySelectorAll('.edittab').forEach(b=>{
    const tab=b.dataset.editTab;
    b.classList.toggle('hidden',tab!=='basic'&&tab!==r.type);
@@ -135,24 +171,28 @@ function openEdit(id){
  renderEditTab();$('editModal').classList.remove('hidden');
 }
 document.querySelectorAll('.edittab').forEach(b=>b.onclick=()=>{saveVisibleEditFields();activeEditTab=b.dataset.editTab;renderEditTab()});
-function closeEdit(){$('editModal').classList.add('hidden');editingId=null}
-function deleteReport(id){
- const a=reports(),r=a.find(x=>Number(x.id)===Number(id));if(!r)return;
+function closeEdit(){$('editModal').classList.add('hidden');editingId=null;editingReport=null}
+async function deleteReport(id){
+ const r=reports().find(x=>String(x.id)===String(id));if(!r)return;
  const name=r.facility||'この回答';
  if(!confirm('「'+name+'」の回答データを消去します。\nこの操作は元に戻せません。よろしいですか？'))return;
- const next=a.filter(x=>Number(x.id)!==Number(id));
- localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(next));
- render();
+ const {error}=await db.from('medical_reports').delete().eq('id',id);
+ if(error){alert('消去できません：'+error.message);return}await loadReports();
 }
 $('editClose').onclick=closeEdit;$('editCancel').onclick=closeEdit;
 $('editModal').addEventListener('click',e=>{if(e.target===$('editModal'))closeEdit()});
-$('editSave').onclick=()=>{
+$('editSave').onclick=async()=>{
  if(editingId===null)return;
  saveVisibleEditFields();
- const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
- a[i].updatedAt=new Date().toISOString();localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
- $('editStatus').textContent='変更を保存しました。';$('editStatus').className='status';render();setTimeout(closeEdit,500);
+ const r=editingReport;
+ const basicKeys=new Set(['id','type','facility','facilityType','municipality','reporter','phone','reportedAt','createdAt','updatedAt']);
+ const payload={};Object.entries(r).forEach(([key,value])=>{if(!basicKeys.has(key))payload[key]=value});
+ $('editSave').disabled=true;$('editStatus').textContent='保存しています…';
+ const {error}=await db.from('medical_reports').update({report_type:r.type,facility:r.facility,facility_type:r.facilityType,municipality:r.municipality,reporter:r.reporter,phone:r.phone,reported_at:r.reportedAt||null,payload}).eq('id',editingId);
+ $('editSave').disabled=false;
+ if(error){$('editStatus').textContent='保存できません：'+error.message;$('editStatus').className='status bad';return}
+ $('editStatus').textContent='変更を保存しました。';$('editStatus').className='status';await loadReports();setTimeout(closeEdit,500);
 };
 
-refreshAuth();
+if(!db){setLoginStatus('app-config.js にSupabase接続設定が必要です。')}else db.auth.getSession().then(({data})=>{if(data.session)completeLogin();else setAuthView(false)});
 </script></body></html>

@@ -77,12 +77,13 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <label>必要な支援内容・その他詳細</label><textarea id="detailNote" placeholder="搬送、人員、物資、ライフライン等"></textarea>
 </div>
 
-<button type="submit">この内容で報告する</button>
-<div id="saved" class="status ok hidden">回答を保存しました。</div>
+<button id="submitBtn" type="submit">この内容で報告する</button>
+<div id="saved" class="status hidden" role="status" aria-live="polite"></div>
 </form>
 </section>
-<div class="small" style="text-align:center;padding:25px">※ 現在はブラウザ内保存の試作版です。県内医療機関からの回答を一元集約するには、サーバー側データベースへの接続が必要です。</div>
+<div class="small" style="text-align:center;padding:25px">回答は福島県医師会の災害医療データベースへ安全に送信されます。患者氏名などの個人情報は入力しないでください。</div>
 </main>
+<script src="app-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
@@ -93,11 +94,21 @@ function showForm(type){
  const titles={safety:'① 災害時の安否確認',emergency:'② 緊急時入力',detail:'③ 詳細入力'};$('formTitle').textContent=titles[type];
  $('safetyFields').classList.toggle('hidden',type!=='safety');$('emergencyFields').classList.toggle('hidden',type!=='emergency');$('detailFields').classList.toggle('hidden',type!=='detail');
 }
-function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
-$('reportForm').addEventListener('submit',e=>{
+function showStatus(message,ok){const el=$('saved');el.textContent=message;el.className='status '+(ok?'ok':'r')}
+$('reportForm').addEventListener('submit',async e=>{
  e.preventDefault();
- const r={id:Date.now(),type:$('reportType').value};fieldIds.forEach(id=>r[id]=$(id).value);r.updatedAt=new Date().toISOString();
- const a=reports();a.unshift(r);localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
- $('saved').classList.remove('hidden');setTimeout(()=>$('saved').classList.add('hidden'),3000);
+ const config=window.FMA_APP_CONFIG||{};
+ if(!config.submitReportUrl||!config.supabasePublishableKey){showStatus('現在、送信先の設定を確認できません。管理者へご連絡ください。',false);return}
+ const report={type:$('reportType').value};fieldIds.forEach(id=>report[id]=$(id).value);
+ const button=$('submitBtn');button.disabled=true;button.textContent='送信中…';showStatus('データベースへ送信しています。',true);
+ try{
+   const response=await fetch(config.submitReportUrl,{method:'POST',headers:{'Content-Type':'application/json','apikey':config.supabasePublishableKey},body:JSON.stringify(report)});
+   const result=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(result.error||'send_failed');
+   showStatus('回答を送信しました。ご協力ありがとうございます。',true);
+   setTimeout(()=>{$('reportForm').reset();goHome()},1800);
+ }catch(error){
+   console.error(error);showStatus('送信できませんでした。通信状況を確認して、もう一度お試しください。入力内容は画面に残っています。',false);
+ }finally{button.disabled=false;button.textContent='この内容で報告する'}
 });
 </script></body></html>
