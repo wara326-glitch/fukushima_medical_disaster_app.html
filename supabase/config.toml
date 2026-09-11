@@ -1,0 +1,6 @@
+# Supabase Edge Function configuration
+# Public disaster reporting intentionally does not require a user JWT.
+# Authorization for database writes is enforced server-side inside the Edge Function.
+
+[functions.submit-report]
+verify_jwt = false
