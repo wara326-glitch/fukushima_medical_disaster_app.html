@@ -34,7 +34,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <input type="hidden" id="reportType">
 <div class="row"><div><label>医療機関名 *</label><input id="facility" required></div><div><label>医療機関区分 *</label><select id="facilityType" required><option>病院</option><option>有床診療所</option><option>無床診療所</option><option>歯科診療所</option><option>その他</option></select></div></div>
 <div class="row"><div><label>市町村 *</label><input id="municipality" required></div><div><label>回答者氏名・役職 *</label><input id="reporter" required></div></div>
-<div class="row"><div><label>連絡可能な電話番号 *</label><input id="phone" required></div><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div></div>
+<div class="row"><div><label>連絡可能な電話番号 *</label><input id="phone" required inputmode="tel"></div><div><label>確認メール送付先 *</label><input id="email" type="email" required autocomplete="email" placeholder="入力内容の控えを送信します"></div></div><div class="row"><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div><div class="note">送信後、このメールアドレスへ受付番号と入力内容の控えを送信します。</div></div>
 <div class="row"><div><label>EMIS入力状況</label><select id="emisStatus"><option>未入力</option><option>緊急時入力済み</option><option>詳細入力済み</option><option>EMIS対象外・不明</option></select></div><div><label>震度</label><select id="seismic"><option value="">未確認</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5弱</option><option>5強</option><option>6弱</option><option>6強</option><option>7</option></select></div></div>
 
 <div id="safetyFields" class="section">
@@ -86,7 +86,8 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <script src="firebase-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
+const FIREBASE_FUNCTION_URL='__SUBMIT_REPORT_FUNCTION_URL__';
+const fieldIds=['email','facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
 function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
