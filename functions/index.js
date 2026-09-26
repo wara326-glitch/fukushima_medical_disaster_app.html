@@ -1,18 +1,21 @@
 const {onRequest}=require("firebase-functions/v2/https");
 const {setGlobalOptions}=require("firebase-functions/v2");
+const {defineSecret}=require("firebase-functions/params");
 const admin=require("firebase-admin");
 admin.initializeApp();
 setGlobalOptions({region:"asia-northeast1",maxInstances:20});
 const db=admin.firestore();
+const RESEND_API_KEY=defineSecret("RESEND_API_KEY");
+const MAIL_FROM=defineSecret("MAIL_FROM");
 const ALLOWED_ORIGINS=new Set([
  "https://wara326-glitch.github.io",
  "http://localhost:5000",
  "http://127.0.0.1:5000"
 ]);
 const TYPES=new Set(["safety","emergency","detail"]);
-const REQUIRED=["facility","facilityType","municipality","reporter","phone","reportedAt"];
-const ALLOWED=["type","facility","facilityType","municipality","reporter","phone","reportedAt","emisStatus","seismic","staffSafety","facilityDamage","careStatus","supportNeeded","safetyNote","building","buildingRisk","power","water","gas","comms","careEmergency","emergencyAccept","inpatientImpact","transferNeed","staffShort","supplyShort","emergencySupport","transportSupport","emergencyNote","detailDamage","flood","fire","gridPower","generator","fuelHours","detailWater","tank","fixedPhone","internet","outpatient","er","ward","surgery","icu","dialysis","delivery","homecare","pharmacy","oxygen","inpatients","transferCount","newAccept","criticalAccept","doctorShort","nurseShort","supplies","detailNote"];
-exports.submitReport=onRequest(async(req,res)=>{
+const REQUIRED=["facility","facilityType","municipality","reporter","phone","email","reportedAt"];
+const ALLOWED=["type","email","facility","facilityType","municipality","reporter","phone","reportedAt","emisStatus","seismic","staffSafety","facilityDamage","careStatus","supportNeeded","safetyNote","building","buildingRisk","power","water","gas","comms","careEmergency","emergencyAccept","inpatientImpact","transferNeed","staffShort","supplyShort","emergencySupport","transportSupport","emergencyNote","detailDamage","flood","fire","gridPower","generator","fuelHours","detailWater","tank","fixedPhone","internet","outpatient","er","ward","surgery","icu","dialysis","delivery","homecare","pharmacy","oxygen","inpatients","transferCount","newAccept","criticalAccept","doctorShort","nurseShort","supplies","detailNote"];
+exports.submitReport=onRequest({secrets:[RESEND_API_KEY,MAIL_FROM]},async(req,res)=>{
  const origin=req.get("origin")||"";
  if(ALLOWED_ORIGINS.has(origin)){res.set("Access-Control-Allow-Origin",origin);res.set("Vary","Origin");}
  if(req.method==="OPTIONS"){res.set("Access-Control-Allow-Methods","POST");res.set("Access-Control-Allow-Headers","Content-Type");return res.status(204).send("");}
@@ -28,6 +31,15 @@ exports.submitReport=onRequest(async(req,res)=>{
  data.createdAt=admin.firestore.FieldValue.serverTimestamp();
  data.updatedAt=admin.firestore.FieldValue.serverTimestamp();
  data.source="public-web";
- const ref=await db.collection("reports").add(data);
- return res.status(201).json({ok:true,reportId:ref.id});
+ const receiptId="FMA-"+new Date().toISOString().slice(0,10).replaceAll("-","")+"-"+require("crypto").randomBytes(4).toString("hex").toUpperCase();
+ data.receiptId=receiptId; data.status="unverified";
+ await db.collection("reports").doc(receiptId).set(data);
+ const escapeHtml=s=>String(s??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+ const rows=Object.entries(data).filter(([k,v])=>k!=="email"&&typeof v==="string"&&v).map(([k,v])=>"<tr><th style='text-align:left;padding:5px'>"+escapeHtml(k)+"</th><td style='padding:5px'>"+escapeHtml(v)+"</td></tr>").join("");
+ let mailSent=false;
+ try{
+  const mr=await fetch("https://api.resend.com/emails",{method:"POST",headers:{Authorization:"Bearer "+RESEND_API_KEY.value(),"Content-Type":"application/json"},body:JSON.stringify({from:MAIL_FROM.value(),to:[data.email],subject:"【福島県医師会】災害時医療情報 受付完了 "+receiptId,html:"<p>災害時医療情報の報告を受け付けました。</p><p><b>受付番号："+escapeHtml(receiptId)+"</b></p><table>"+rows+"</table><p>このメールは入力内容の控えです。</p>"})});
+  mailSent=mr.ok; if(!mr.ok) console.error("receipt mail failed",mr.status);
+ }catch(e){console.error("receipt mail error",e);}
+ return res.status(201).json({ok:true,receiptId,mailSent});
 });
