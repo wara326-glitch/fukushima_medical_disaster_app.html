@@ -16,12 +16,12 @@ Branch: firebase-secure-backend
 3. Add wara326-glitch.github.io to Authentication > Settings > Authorized domains.
 4. Create Firestore in a Japan/appropriate region.
 5. Install Firebase CLI locally, login, and set project in .firebaserc.
-6. Deploy: firebase deploy --only functions,firestore:rules
-7. Copy Firebase Web config into firebase-config.js and the deployed submitReport URL into FMA_SUBMIT_URL.
-8. Deploy the branch to a test Pages environment before merging to main.
-9. Sign in once with the intended administrator Google account, obtain its Firebase Auth UID in Firebase Console, then create:
+6. Configure receipt-mail secrets:\n   - `firebase functions:secrets:set RESEND_API_KEY`\n   - `firebase functions:secrets:set MAIL_FROM` (verified sender, e.g. `災害情報 <noreply@your-domain.jp>`)\n7. Deploy: `firebase deploy --only functions,firestore:rules`
+8. Copy Firebase Web config into firebase-config.js and the deployed submitReport URL into FMA_SUBMIT_URL.
+9. Deploy the branch to a test Pages environment before merging to main.
+10. Sign in once with the intended administrator Google account, obtain its Firebase Auth UID in Firebase Console, then create:
    admin_profiles/{UID} = { enabled: true, role: "admin", email: "ADMIN_EMAIL" }
-10. Test anonymous submit, anonymous read denial, unauthorized Google account denial, viewer/editor/admin permissions.
+11. Test anonymous submit, anonymous read denial, unauthorized Google account denial, viewer/editor/admin permissions.
 
 ## Important
 Do not put service-account JSON, private keys, passwords, recovery codes, or patient-identifying data in this repository.
