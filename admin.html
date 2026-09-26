@@ -16,10 +16,10 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
 <header><h1>福島県医師会 災害時医療情報 管理者ページ</h1><p>医療機関別一覧・検索・絞り込み・CSV出力</p></header>
 <main>
 <section id="loginView" class="card login">
-<h2>管理者ログイン</h2><p class="small" id="setupText"></p>
-<label>管理者ID</label><input id="adminId" class="grow" autocomplete="username">
-<label style="display:block;margin-top:10px">パスワード</label><input id="adminPw" class="grow" type="password" autocomplete="current-password">
-<div style="margin-top:14px"><button id="loginBtn">ログイン / 初回設定</button></div><div id="loginStatus" class="status bad"></div>
+<h2>管理者ログイン</h2>
+<p class="small">許可された管理者のGoogleアカウントでログインしてください。</p>
+<div style="margin-top:14px"><button id="googleLoginBtn">Googleでログイン</button></div>
+<div id="loginStatus" class="status bad"></div>
 </section>
 <section id="dashView" class="hidden">
 <div class="card"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0">回答一覧</h2><div class="small">①安否確認／②緊急時入力／③詳細入力を一覧表示します。</div></div><div><button id="csvBtn">CSV出力</button> <button id="logoutBtn" class="secondary">ログアウト</button></div></div>
@@ -48,111 +48,30 @@ input,select{padding:10px;border:1px solid #cbd5e1;border-radius:9px;background:
   </div>
 </div>
 </main>
-<script>
-const $=id=>document.getElementById(id);function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
-async function hash(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-function conf(){return JSON.parse(localStorage.getItem('fmaAdminConf')||'null')}function logged(){return sessionStorage.getItem('fmaAdminLogged')==='1'}
-function refreshAuth(){const ok=logged();$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok);$('setupText').textContent=conf()?'管理者IDとパスワードを入力してください。':'初回のみ、この端末で管理者IDとパスワードを設定してください。';if(ok)render()}
-$('loginBtn').onclick=async()=>{const id=$('adminId').value.trim(),pw=$('adminPw').value;if(!id||!pw){$('loginStatus').textContent='IDとパスワードを入力してください。';return}const h=await hash(pw),c=conf();if(!c){localStorage.setItem('fmaAdminConf',JSON.stringify({id,hash:h}));sessionStorage.setItem('fmaAdminLogged','1');$('loginStatus').textContent='';refreshAuth();return}if(c.id===id&&c.hash===h){sessionStorage.setItem('fmaAdminLogged','1');$('adminPw').value='';$('loginStatus').textContent='';refreshAuth()}else $('loginStatus').textContent='IDまたはパスワードが違います。'}
-$('logoutBtn').onclick=()=>{sessionStorage.removeItem('fmaAdminLogged');refreshAuth()}
-function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-function filtered(){const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;return reports().filter(r=>{const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q);const typeOk=!t||r.type===t;const urgent=r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要';const needed=urgent||r.supportNeeded==='あり'||r.emergencySupport==='要'||String(r.emergencyNote||r.detailNote||'').trim()!=='';return hit&&typeOk&&(!s||(s==='urgent'?urgent:needed))})}
-const commonCols=[
- ['reportedAt','報告時刻'],['facility','医療機関名'],['municipality','市町村'],['facilityType','区分'],['reporter','回答者'],['phone','連絡先'],['emisStatus','EMIS状況'],['seismic','震度']
-];
-const typeCols={
- safety:[['staffSafety','職員の安否'],['facilityDamage','医療機関の被害'],['careStatus','診療状況'],['supportNeeded','支援要請'],['safetyNote','第1報・備考']],
- emergency:[['building','建物・施設被害'],['buildingRisk','建物の危険状況'],['power','電気'],['water','水道'],['gas','医療ガス'],['comms','通信'],['careEmergency','現在の診療可否'],['emergencyAccept','救急患者受入'],['inpatientImpact','入院患者への影響'],['transferNeed','転院が必要な患者'],['staffShort','人員不足'],['supplyShort','医薬品・医療資機材不足'],['emergencySupport','支援要否'],['transportSupport','患者搬送支援'],['emergencyNote','必要な支援内容']],
- detail:[['detailDamage','倒壊・損壊'],['flood','浸水'],['fire','火災'],['gridPower','商用電源'],['generator','非常用発電機'],['fuelHours','燃料残り時間（時間）'],['detailWater','上水'],['tank','受水槽'],['fixedPhone','固定電話'],['internet','インターネット'],['outpatient','外来'],['er','救急'],['ward','入院'],['surgery','手術'],['icu','ICU/HCU'],['dialysis','人工透析'],['delivery','分娩'],['homecare','在宅医療'],['pharmacy','処方・薬剤提供'],['oxygen','酸素・医療ガス供給'],['inpatients','現在の入院患者数'],['transferCount','転院必要患者数'],['newAccept','新規患者受入'],['criticalAccept','重症患者受入'],['doctorShort','医師不足'],['nurseShort','看護師不足'],['supplies','不足している医薬品・物資・資機材'],['detailNote','必要な支援内容・その他詳細']]
-};
+<script src="firebase-config.js"></script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-auth.js";
+import {getFirestore,collection,query,orderBy,getDocs,doc,getDoc,updateDoc,deleteDoc,serverTimestamp} from "https://www.gstatic.com/firebasejs/12.3.0/firebase-firestore.js";
+const $=id=>document.getElementById(id), app=initializeApp(window.FMA_FIREBASE_CONFIG),auth=getAuth(app),db=getFirestore(app);
+let cache=[],profile=null;
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const typeLabel={safety:'①安否確認',emergency:'②緊急時入力',detail:'③詳細入力'};
-function valueText(v){return v===undefined||v===null?'':String(v)}
-function cellHtml(r,k){
- const v=valueText(r[k]);let cls='';
- if(r.type==='safety'&&k==='supportNeeded') cls=v==='緊急'?'support-urgent':v==='あり'?'support-needed':'';
- if(r.type==='emergency'){
-   if(k==='building') cls=v==='使用不能'?'alert-purple':v==='重大な被害'?'alert-red':v==='一部被害'?'alert-yellow':'';
-   if(k==='buildingRisk'&&v==='危険あり') cls='alert-red';
-   if(k==='power'&&v==='停電') cls='alert-red';
-   if(k==='water'&&v==='断水') cls='alert-red';
- }
- return '<td'+(cls?' class="'+cls+'"':'')+'>'+esc(v)+'</td>';
-}
-function render(){
- const all=reports(),a=filtered(),selected=$('typeFilter').value;
- $('summary').textContent='全報告 '+all.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+all.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';
- if(selected){
-   const cols=commonCols.concat(typeCols[selected]||[]);
-   $('tableTitle').textContent=typeLabel[selected]+' の回答';
-   $('tableHead').innerHTML='<th>操作</th>'+cols.map(([,label])=>'<th>'+esc(label)+'</th>').join('');
-   $('rows').innerHTML=a.map(r=>'<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td>'+cols.map(([k])=>cellHtml(r,k)).join('')+'</tr>').join('')||'<tr><td colspan="'+(cols.length+1)+'">該当する回答はありません。</td></tr>';
- }else{
-   $('tableTitle').textContent='①・②・③ 回答一覧（回答内容は項目ごとに横並び表示）';
-   const allTypeCols=[
-     ...typeCols.safety.map(x=>['safety',...x]),
-     ...typeCols.emergency.map(x=>['emergency',...x]),
-     ...typeCols.detail.map(x=>['detail',...x])
-   ];
-   $('tableHead').innerHTML='<th>操作</th><th>報告区分</th>'+commonCols.map(([,label])=>'<th>'+esc(label)+'</th>').join('')+
-     allTypeCols.map(([t,k,label])=>'<th>'+esc(typeLabel[t]+'｜'+label)+'</th>').join('');
-   $('rows').innerHTML=a.map(r=>{
-     return '<tr><td><button class="editbtn" onclick="openEdit('+Number(r.id)+')">編集</button><button class="deletebtn" onclick="deleteReport('+Number(r.id)+')">消去</button></td><td>'+esc(typeLabel[r.type]||r.type)+'</td>'+
-       commonCols.map(([k])=>cellHtml(r,k)).join('')+
-       allTypeCols.map(([t,k])=>r.type===t?cellHtml(r,k):'<td></td>').join('')+
-       '</tr>';
-   }).join('')||'<tr><td colspan="'+(commonCols.length+allTypeCols.length+2)+'">該当する回答はありません。</td></tr>';
- }
-}
+async function loadProfile(u){const x=await getDoc(doc(db,'admin_profiles',u.uid));return x.exists()?x.data():null}
+async function loadReports(){const snap=await getDocs(query(collection(db,'reports'),orderBy('createdAt','desc')));cache=snap.docs.map(d=>({id:d.id,...d.data()}));render()}
+function refresh(){const ok=!!profile;$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok)}
+$('googleLoginBtn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>$('loginStatus').textContent='ログインできませんでした：'+e.message);
+$('logoutBtn').onclick=()=>signOut(auth);
+onAuthStateChanged(auth,async u=>{profile=null;refresh();if(!u)return;try{profile=await loadProfile(u);if(!profile||profile.enabled!==true){$('loginStatus').textContent='このGoogleアカウントには管理者権限がありません。';await signOut(auth);return}refresh();await loadReports()}catch(e){$('loginStatus').textContent='権限確認に失敗しました：'+e.message}});
+function filtered(){const q=$('search').value.trim().toLowerCase(),t=$('typeFilter').value,s=$('supportFilter').value;return cache.filter(r=>{const hit=!q||(String(r.facility||'')+' '+String(r.municipality||'')).toLowerCase().includes(q),typeOk=!t||r.type===t,urgent=r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要',needed=urgent||r.supportNeeded==='あり'||r.emergencySupport==='要'||String(r.emergencyNote||r.detailNote||'').trim();return hit&&typeOk&&(!s||(s==='urgent'?urgent:needed))})}
+const keys=['reportedAt','facility','municipality','facilityType','type','reporter','phone','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
+function render(){const a=filtered();$('summary').textContent='全報告 '+cache.length+'件 ／ 表示 '+a.length+'件 ／ 緊急支援 '+cache.filter(r=>r.supportNeeded==='緊急'||r.emergencySupport==='緊急に要').length+'件';$('tableTitle').textContent='回答一覧';$('tableHead').innerHTML='<th>操作</th>'+keys.map(k=>'<th>'+esc(k)+'</th>').join('');$('rows').innerHTML=a.map(r=>'<tr><td>'+(profile.role!=='viewer'?'<button class="editbtn" data-edit="'+r.id+'">編集</button> ':'')+(profile.role==='admin'?'<button class="deletebtn" data-del="'+r.id+'">消去</button>':'')+'</td>'+keys.map(k=>'<td>'+esc(k==='type'?(typeLabel[r[k]]||r[k]):r[k])+'</td>').join('')+'</tr>').join('')||'<tr><td>該当する回答はありません。</td></tr>';document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>openEdit(b.dataset.edit));document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>removeReport(b.dataset.del))}
 ['search','typeFilter','supportFilter'].forEach(id=>$(id).addEventListener('input',render));
-$('csvBtn').onclick=()=>{const a=filtered();const keys=['reportedAt','facility','municipality','facilityType','type','reporter','phone','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];const e=v=>'"'+String(v??'').replaceAll('"','""')+'"';const csv='\ufeff'+keys.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='fukushima_medical_disaster_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url)}
-const editGroups={
-basic:[['type','報告区分'],['reportedAt','報告時刻'],['facility','医療機関名'],['facilityType','医療機関区分'],['municipality','市町村'],['reporter','回答者氏名・役職'],['phone','連絡可能な電話番号'],['emisStatus','EMIS入力状況'],['seismic','震度']],
-safety:[['staffSafety','職員の安否'],['facilityDamage','医療機関の被害'],['careStatus','診療状況'],['supportNeeded','支援要請'],['safetyNote','第1報・備考']],
-emergency:[['building','建物・施設被害'],['buildingRisk','建物の危険状況'],['power','電気'],['water','水道'],['gas','医療ガス'],['comms','通信'],['careEmergency','現在の診療可否'],['emergencyAccept','救急患者受入'],['inpatientImpact','入院患者への影響'],['transferNeed','転院が必要な患者'],['staffShort','人員不足'],['supplyShort','医薬品・医療資機材不足'],['emergencySupport','支援要否'],['transportSupport','患者搬送支援'],['emergencyNote','必要な支援内容']],
-detail:[['detailDamage','倒壊・損壊'],['flood','浸水'],['fire','火災'],['gridPower','商用電源'],['generator','非常用発電機'],['fuelHours','燃料残り時間（時間）'],['detailWater','上水'],['tank','受水槽'],['fixedPhone','固定電話'],['internet','インターネット'],['outpatient','外来'],['er','救急'],['ward','入院'],['surgery','手術'],['icu','ICU/HCU'],['dialysis','人工透析'],['delivery','分娩'],['homecare','在宅医療'],['pharmacy','処方・薬剤提供'],['oxygen','酸素・医療ガス供給'],['inpatients','現在の入院患者数'],['transferCount','転院必要患者数'],['newAccept','新規患者受入'],['criticalAccept','重症患者受入'],['doctorShort','医師不足'],['nurseShort','看護師不足'],['supplies','不足している医薬品・物資・資機材'],['detailNote','必要な支援内容・その他詳細']]
-};
-const longKeys=new Set(['safetyNote','emergencyNote','supplies','detailNote']);
-let activeEditTab='basic';
+$('csvBtn').onclick=()=>{const a=filtered(),e=v=>'"'+String(v??'').replaceAll('"','""')+'"',csv='\ufeff'+keys.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='fukushima_medical_disaster_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url)};
 let editingId=null;
-function renderEditTab(){
- const a=reports(),r=a.find(x=>Number(x.id)===Number(editingId));if(!r)return;
- document.querySelectorAll('.edittab').forEach(b=>b.classList.toggle('active',b.dataset.editTab===activeEditTab));
- $('editFields').innerHTML=editGroups[activeEditTab].map(([k,label])=>'<div class="editfield"><label>'+esc(label)+'</label>'+(longKeys.has(k)?'<textarea data-key="'+k+'">'+esc(r[k]??'')+'</textarea>':'<input data-key="'+k+'" value="'+esc(r[k]??'')+'">')+'</div>').join('');
-}
-function saveVisibleEditFields(){
- if(editingId===null)return;
- const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
- $('editFields').querySelectorAll('[data-key]').forEach(el=>a[i][el.dataset.key]=el.value);
- localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
-}
-function openEdit(id){
- const r=reports().find(x=>Number(x.id)===Number(id));if(!r)return;
- editingId=Number(id);activeEditTab='basic';$('editStatus').textContent='';
- document.querySelectorAll('.edittab').forEach(b=>{
-   const tab=b.dataset.editTab;
-   b.classList.toggle('hidden',tab!=='basic'&&tab!==r.type);
- });
- renderEditTab();$('editModal').classList.remove('hidden');
-}
-document.querySelectorAll('.edittab').forEach(b=>b.onclick=()=>{saveVisibleEditFields();activeEditTab=b.dataset.editTab;renderEditTab()});
+function openEdit(id){if(!['editor','admin'].includes(profile.role))return;const r=cache.find(x=>x.id===id);if(!r)return;editingId=id;$('editFields').innerHTML=keys.filter(k=>k!=='type').map(k=>'<div class="editfield"><label>'+esc(k)+'</label><input data-key="'+k+'" value="'+esc(r[k]??'')+'"></div>').join('');$('editModal').classList.remove('hidden')}
 function closeEdit(){$('editModal').classList.add('hidden');editingId=null}
-function deleteReport(id){
- const a=reports(),r=a.find(x=>Number(x.id)===Number(id));if(!r)return;
- const name=r.facility||'この回答';
- if(!confirm('「'+name+'」の回答データを消去します。\nこの操作は元に戻せません。よろしいですか？'))return;
- const next=a.filter(x=>Number(x.id)!==Number(id));
- localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(next));
- render();
-}
 $('editClose').onclick=closeEdit;$('editCancel').onclick=closeEdit;
-$('editModal').addEventListener('click',e=>{if(e.target===$('editModal'))closeEdit()});
-$('editSave').onclick=()=>{
- if(editingId===null)return;
- saveVisibleEditFields();
- const a=reports(),i=a.findIndex(x=>Number(x.id)===Number(editingId));if(i<0)return;
- a[i].updatedAt=new Date().toISOString();localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
- $('editStatus').textContent='変更を保存しました。';$('editStatus').className='status';render();setTimeout(closeEdit,500);
-};
-
-refreshAuth();
+$('editSave').onclick=async()=>{if(!editingId)return;const patch={updatedAt:serverTimestamp()};$('editFields').querySelectorAll('[data-key]').forEach(x=>patch[x.dataset.key]=x.value);await updateDoc(doc(db,'reports',editingId),patch);closeEdit();await loadReports()};
+async function removeReport(id){if(profile.role!=='admin'||!confirm('この回答を削除します。元に戻せません。'))return;await deleteDoc(doc(db,'reports',id));await loadReports()}
 </script></body></html>

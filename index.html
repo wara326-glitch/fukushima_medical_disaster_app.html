@@ -34,7 +34,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <input type="hidden" id="reportType">
 <div class="row"><div><label>医療機関名 *</label><input id="facility" required></div><div><label>医療機関区分 *</label><select id="facilityType" required><option>病院</option><option>有床診療所</option><option>無床診療所</option><option>歯科診療所</option><option>その他</option></select></div></div>
 <div class="row"><div><label>市町村 *</label><input id="municipality" required></div><div><label>回答者氏名・役職 *</label><input id="reporter" required></div></div>
-<div class="row"><div><label>連絡可能な電話番号 *</label><input id="phone" required></div><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div></div>
+<div class="row"><div><label>連絡可能な電話番号 *</label><input id="phone" required inputmode="tel"></div><div><label>確認メール送付先 *</label><input id="email" type="email" required autocomplete="email" placeholder="入力内容の控えを送信します"></div></div><div class="row"><div><label>報告時刻</label><input id="reportedAt" type="datetime-local"></div><div class="note">送信後、このメールアドレスへ受付番号と入力内容の控えを送信します。</div></div>
 <div class="row"><div><label>EMIS入力状況</label><select id="emisStatus"><option>未入力</option><option>緊急時入力済み</option><option>詳細入力済み</option><option>EMIS対象外・不明</option></select></div><div><label>震度</label><select id="seismic"><option value="">未確認</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5弱</option><option>5強</option><option>6弱</option><option>6強</option><option>7</option></select></div></div>
 
 <div id="safetyFields" class="section">
@@ -81,11 +81,13 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <div id="saved" class="status ok hidden">回答を保存しました。</div>
 </form>
 </section>
-<div class="small" style="text-align:center;padding:25px">※ 現在はブラウザ内保存の試作版です。県内医療機関からの回答を一元集約するには、サーバー側データベースへの接続が必要です。</div>
+<div class="small" style="text-align:center;padding:25px">※ 回答は暗号化通信でサーバーへ送信され、一般利用者から回答一覧を閲覧することはできません。患者氏名・生年月日・診察券番号等は入力しないでください。</div>
 </main>
+<script src="firebase-config.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
+const FIREBASE_FUNCTION_URL=window.FMA_SUBMIT_URL;
+const fieldIds=['email','facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
 function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
@@ -93,11 +95,19 @@ function showForm(type){
  const titles={safety:'① 災害時の安否確認',emergency:'② 緊急時入力',detail:'③ 詳細入力'};$('formTitle').textContent=titles[type];
  $('safetyFields').classList.toggle('hidden',type!=='safety');$('emergencyFields').classList.toggle('hidden',type!=='emergency');$('detailFields').classList.toggle('hidden',type!=='detail');
 }
-function reports(){return JSON.parse(localStorage.getItem('fmaMedicalDisasterReports')||'[]')}
-$('reportForm').addEventListener('submit',e=>{
+$('reportForm').addEventListener('submit',async e=>{
  e.preventDefault();
- const r={id:Date.now(),type:$('reportType').value};fieldIds.forEach(id=>r[id]=$(id).value);r.updatedAt=new Date().toISOString();
- const a=reports();a.unshift(r);localStorage.setItem('fmaMedicalDisasterReports',JSON.stringify(a));
- $('saved').classList.remove('hidden');setTimeout(()=>$('saved').classList.add('hidden'),3000);
+ const btn=e.submitter||$('reportForm').querySelector('button[type="submit"]');
+ const r={type:$('reportType').value};fieldIds.forEach(id=>r[id]=$(id).value);
+ if(!window.FMA_SUBMIT_URL||window.FMA_SUBMIT_URL.startsWith('REPLACE_')){alert('Firebase送信先が未設定です。管理者に連絡してください。');return;}
+ btn.disabled=true;btn.textContent='送信中…';
+ try{
+   const res=await fetch(window.FMA_SUBMIT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r)});
+   const body=await res.json().catch(()=>({}));
+   if(!res.ok) throw new Error(body.error||'送信に失敗しました');
+   $('saved').textContent='回答を安全に送信しました。';
+   $('saved').classList.remove('hidden');setTimeout(()=>$('saved').classList.add('hidden'),4000);
+ }catch(err){alert('送信できませんでした。通信状況を確認して再度お試しください。\n'+err.message)}
+ finally{btn.disabled=false;btn.textContent='この内容で報告する';}
 });
 </script></body></html>
