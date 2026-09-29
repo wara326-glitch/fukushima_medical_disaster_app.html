@@ -21,7 +21,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 <section id="home">
 <div class="card"><b>発災時は、まず「① 災害時の安否確認」を入力してください。</b><div class="small">病院・有床診療所・無床診療所・歯科診療所等の会員医療機関を想定しています。</div></div>
 <div class="grid home" style="margin-top:14px">
-<div class="card action" onclick="showForm('safety')"><div class="icon">✅</div><span class="badge b">第1報</span><h2>① 災害時の安否確認</h2><p>職員・施設の安否、診療継続可否、支援要否を迅速報告</p></div>
+<div class="card action" onclick="showForm('safety')"><div class="icon">✅</div><span class="badge b">第1報</span><h2>① 災害時の安否確認</h2><p>自分・家族・職員・施設の安否、診療継続可否、支援要否を迅速報告</p></div>
 <div class="card action" onclick="showForm('emergency')"><div class="icon">🚨</div><span class="badge r">緊急</span><h2>② 緊急時入力</h2><p>建物、ライフライン、診療・救急受入、支援要請を入力</p></div>
 <div class="card action" onclick="showForm('detail')"><div class="icon">🏥</div><span class="badge y">詳細</span><h2>③ 詳細入力</h2><p>被災状況、ライフライン・サプライ、診療機能、患者搬送を詳細入力</p></div>
 </div>
@@ -39,6 +39,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 
 <div id="safetyFields" class="section">
 <h3>① 災害時の安否確認</h3>
+<div class="row"><div><label>自分の安否</label><select id="selfSafety"><option>無事</option><option>軽傷</option><option>重傷</option><option>その他</option><option>確認中</option></select></div><div><label>家族の安否</label><select id="familySafety"><option>全員無事</option><option>負傷者あり</option><option>安否不明者あり</option><option>未確認</option><option>その他</option></select></div></div>
 <div class="row"><div><label>職員の安否</label><select id="staffSafety"><option>問題なし</option><option>負傷者あり</option><option>重傷者あり</option><option>確認中</option></select></div><div><label>医療機関の被害</label><select id="facilityDamage"><option>被害なし</option><option>被害あり</option><option>確認中</option></select></div></div>
 <div class="row"><div><label>診療状況</label><select id="careStatus"><option>通常診療可能</option><option>一部診療可能</option><option>診療不能</option><option>未確認</option></select></div><div><label>支援要請</label><select id="supportNeeded"><option>なし</option><option>あり</option><option>緊急</option><option>確認中</option></select></div></div>
 <label>第1報・備考</label><textarea id="safetyNote" placeholder="例：外来診療可能。CT室浸水のため使用不能。"></textarea>
@@ -85,7 +86,7 @@ label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,selec
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
+const fieldIds=['facility','facilityType','municipality','reporter','phone','reportedAt','emisStatus','seismic','selfSafety','familySafety','staffSafety','facilityDamage','careStatus','supportNeeded','safetyNote','building','buildingRisk','power','water','gas','comms','careEmergency','emergencyAccept','inpatientImpact','transferNeed','staffShort','supplyShort','emergencySupport','transportSupport','emergencyNote','detailDamage','flood','fire','gridPower','generator','fuelHours','detailWater','tank','fixedPhone','internet','outpatient','er','ward','surgery','icu','dialysis','delivery','homecare','pharmacy','oxygen','inpatients','transferCount','newAccept','criticalAccept','doctorShort','nurseShort','supplies','detailNote'];
 function nowLocal(){let d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,16)}
 function goHome(){$('formPage').classList.add('hidden');$('home').classList.remove('hidden')}
 function showForm(type){
