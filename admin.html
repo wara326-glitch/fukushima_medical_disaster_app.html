@@ -58,7 +58,16 @@ let cache=[],profile=null;
 const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const typeLabel={safety:'①安否確認',emergency:'②緊急時入力',detail:'③詳細入力'};
 async function loadProfile(u){const x=await getDoc(doc(db,'admin_profiles',u.uid));return x.exists()?x.data():null}
-async function loadReports(){const snap=await getDocs(query(collection(db,'reports'),orderBy('createdAt','desc')));cache=snap.docs.map(d=>({id:d.id,...d.data()}));render()}
+async function loadReports(){
+ const snap=await getDocs(query(collection(db,'reports'),orderBy('createdAt','desc')));
+ cache=snap.docs.map(d=>({id:d.id,...d.data()}));
+ if(profile&&(profile.role==='admin'||profile.canViewPersonal===true)){
+   const priv=await getDocs(collection(db,'private_reports'));
+   const byId=new Map(priv.docs.map(d=>[d.id,d.data()]));
+   cache=cache.map(r=>({...r,...(byId.get(r.id)||{})}));
+ }
+ render()
+}
 function refresh(){const ok=!!profile;$('loginView').classList.toggle('hidden',ok);$('dashView').classList.toggle('hidden',!ok)}
 $('googleLoginBtn').onclick=()=>signInWithPopup(auth,new GoogleAuthProvider()).catch(e=>$('loginStatus').textContent='ログインできませんでした：'+e.message);
 $('logoutBtn').onclick=()=>signOut(auth);
@@ -69,7 +78,7 @@ function render(){const a=filtered();$('summary').textContent='全報告 '+cache
 ['search','typeFilter','supportFilter'].forEach(id=>$(id).addEventListener('input',render));
 $('csvBtn').onclick=()=>{const a=filtered(),e=v=>'"'+String(v??'').replaceAll('"','""')+'"',csv='\ufeff'+keys.map(e).join(',')+'\n'+a.map(r=>keys.map(k=>e(r[k])).join(',')).join('\n'),blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),x=document.createElement('a');x.href=url;x.download='fukushima_medical_disaster_'+new Date().toISOString().slice(0,10)+'.csv';x.click();URL.revokeObjectURL(url)};
 let editingId=null;
-function openEdit(id){if(!['editor','admin'].includes(profile.role))return;const r=cache.find(x=>x.id===id);if(!r)return;editingId=id;$('editFields').innerHTML=keys.filter(k=>k!=='type').map(k=>'<div class="editfield"><label>'+esc(k)+'</label><input data-key="'+k+'" value="'+esc(r[k]??'')+'"></div>').join('');$('editModal').classList.remove('hidden')}
+function openEdit(id){if(!['editor','admin'].includes(profile.role))return;const r=cache.find(x=>x.id===id);if(!r)return;editingId=id;const editableKeys=keys.filter(k=>!['type','reporter','phone'].includes(k));$('editFields').innerHTML=editableKeys.map(k=>'<div class="editfield"><label>'+esc(k)+'</label><input data-key="'+k+'" value="'+esc(r[k]??'')+'"></div>').join('');$('editModal').classList.remove('hidden')}
 function closeEdit(){$('editModal').classList.add('hidden');editingId=null}
 $('editClose').onclick=closeEdit;$('editCancel').onclick=closeEdit;
 $('editSave').onclick=async()=>{if(!editingId)return;const patch={updatedAt:serverTimestamp()};$('editFields').querySelectorAll('[data-key]').forEach(x=>patch[x.dataset.key]=x.value);await updateDoc(doc(db,'reports',editingId),patch);closeEdit();await loadReports()};
