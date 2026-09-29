@@ -1,10 +1,11 @@
 // Firebase Web configuration (public identifiers only).
-// Replace the placeholder values with Firebase Console > Project settings > Your apps > Web app.
 window.FMA_FIREBASE_CONFIG = {
-  apiKey: "REPLACE_ME",
-  authDomain: "REPLACE_ME.firebaseapp.com",
-  projectId: "REPLACE_ME",
-  appId: "REPLACE_ME"
+  apiKey: "AIzaSyDtc1q7zqw15Q7lxRg_SJ7z1ZN_w3WBhEs",
+  authDomain: "fma-disaster-app.firebaseapp.com",
+  projectId: "fma-disaster-app",
+  storageBucket: "fma-disaster-app.firebasestorage.app",
+  messagingSenderId: "1056178890149",
+  appId: "1:1056178890149:web:241e8f872f1df53444344c"
 };
-// Deployed HTTPS Cloud Function URL, e.g. https://asia-northeast1-PROJECT_ID.cloudfunctions.net/submitReport
-window.FMA_SUBMIT_URL = "REPLACE_WITH_SUBMIT_REPORT_FUNCTION_URL";
+// Cloud Function URL after deployment.
+window.FMA_SUBMIT_URL = "https://asia-northeast1-fma-disaster-app.cloudfunctions.net/submitReport";
