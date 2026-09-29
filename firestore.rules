@@ -2,16 +2,26 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
+    function profileExists() {
+      return signedIn() && exists(/databases/$(database)/documents/admin_profiles/$(request.auth.uid));
+    }
     function profile() { return get(/databases/$(database)/documents/admin_profiles/$(request.auth.uid)); }
-    function enabledAdmin() { return signedIn() && profile().data.enabled == true; }
+    function enabledAdmin() { return profileExists() && profile().data.enabled == true; }
     function canEdit() { return enabledAdmin() && profile().data.role in ['editor','admin']; }
     function isAdmin() { return enabledAdmin() && profile().data.role == 'admin'; }
+    function canViewPersonal() {
+      return enabledAdmin() && (profile().data.role == 'admin' || profile().data.canViewPersonal == true);
+    }
 
     match /reports/{reportId} {
-      allow create: if false; // Public writes ONLY through Cloud Function/Admin SDK.
+      allow create: if false;
       allow read: if enabledAdmin();
       allow update: if canEdit();
       allow delete: if isAdmin();
+    }
+    match /private_reports/{reportId} {
+      allow create, update, delete: if false;
+      allow read: if canViewPersonal();
     }
     match /admin_profiles/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
@@ -19,7 +29,7 @@ service cloud.firestore {
     }
     match /audit_logs/{id} {
       allow read: if isAdmin();
-      allow write: if false; // server-side only
+      allow write: if false;
     }
     match /{document=**} { allow read, write: if false; }
   }
